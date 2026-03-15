@@ -14,7 +14,9 @@ from storage.postgres_store import (
     insert_document, insert_text_chunk, insert_image_region, 
     get_all_documents, delete_document_data, init_postgres
 )
-from storage.milvus_store import insert_text_vectors, insert_image_vectors, init_milvus
+from storage.milvus_store import (
+    insert_text_vectors, insert_image_vectors, init_milvus, delete_by_doc_id
+)
 from retrieval.dense_retriever import run_dense_retrieval
 from retrieval.bm25_retriever import search as bm25_search, mark_dirty
 from retrieval.rrf_fusion import rrf_fusion
@@ -65,6 +67,7 @@ async def get_documents():
 @app.delete("/documents/{doc_id}")
 async def delete_doc(doc_id: str):
     delete_document_data(doc_id)
+    delete_by_doc_id(doc_id)
     return {"success": True}
 
 @app.get("/ingest/status/{job_id}")

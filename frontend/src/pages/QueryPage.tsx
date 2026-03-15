@@ -41,7 +41,7 @@ const QueryPage: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden pt-[48px]">
-      <Sidebar documents={documents} loading={loading} />
+      <Sidebar documents={documents} loading={loading} onRefresh={fetchDocuments} />
       
       <main className="flex-1 overflow-y-auto p-8 max-w-[1200px] flex flex-col">
         <SearchBar 
