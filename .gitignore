@@ -20,4 +20,5 @@ Thumbs.db
 
 # Project Specific
 tmp/
+models/
 *.log
