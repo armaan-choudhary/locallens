@@ -7,38 +7,54 @@ export default {
   theme: {
     extend: {
       colors: {
-        base:    '#09090b',   // page background
-        surface: '#111113',   // card background
-        raised:  '#18181b',   // input, elevated card
-        border:  '#27272a',   // all borders and dividers
-        muted4:  '#3f3f46',   // placeholders, disabled, muted icons
-        muted5:  '#52525b',   // secondary icons, metadata
-        muted7:  '#71717a',   // secondary text
-        muted10: '#a1a1aa',   // body text
-        muted14: '#e4e4e7',   // primary text
-        white:   '#fafafa',   // headings, active labels
+        // Page layers
+        base:     '#08080a',
+        surface:  '#0f0f13',
+        raised:   '#161620',
+        card:     '#1a1a24',
+
+        // Borders
+        border:   '#22222e',
+        borderHi: '#32323e',
+
+        // Muted text scale
+        muted3:  '#2e2e3c',
+        muted4:  '#3a3a4e',
+        muted5:  '#50505e',
+        muted6:  '#606070',
+        muted7:  '#78788a',
+        muted9:  '#9898aa',
+        muted11: '#c0c0d0',
+        muted14: '#e0e0ee',
+        white:   '#f4f4fc',
+
+        // Accent
+        accent:     '#7c6af7',
+        accentLight:'#a78bfa',
+        accentDim:  'rgba(124,106,247,0.14)',
+
+        // Status
+        success: '#34d399',
+        warning: '#fbbf24',
+        error:   '#f87171',
       },
       fontFamily: {
         inter: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
-      },
-      spacing: {
-        '8': '8px',
-        '16': '16px',
-        '24': '24px',
-        '32': '32px',
-        '40': '40px',
-        '48': '48px',
+        mono:  ['JetBrains Mono', 'monospace'],
       },
       borderRadius: {
-        '4': '4px',
-        '6': '6px',
-        '8': '8px',
+        '4':  '4px',
+        '6':  '6px',
+        '8':  '8px',
         '10': '10px',
+        '12': '12px',
       },
       borderWidth: {
         '1.5': '1.5px',
-      }
+      },
+      animation: {
+        'pulse-slow': 'pulse 2.5s cubic-bezier(0.4,0,0.6,1) infinite',
+      },
     },
   },
   plugins: [],

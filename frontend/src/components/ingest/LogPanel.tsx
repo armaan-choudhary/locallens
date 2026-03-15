@@ -1,8 +1,28 @@
 import React, { useEffect, useRef } from 'react';
+import { Terminal } from 'lucide-react';
 
 interface LogPanelProps {
   logs: string[];
 }
+
+interface ParsedLine {
+  type: 'ok' | 'err' | 'info' | 'dim';
+  text: string;
+}
+
+const parseLine = (log: string): ParsedLine => {
+  if (/✓|done|complete|stored|success/i.test(log)) return { type: 'ok',   text: log };
+  if (/✗|fail|error/i.test(log))                    return { type: 'err',  text: log };
+  if (/embed|ocr|extract|parsing|indexing/i.test(log)) return { type: 'info', text: log };
+  return { type: 'dim', text: log };
+};
+
+const colourMap = {
+  ok:   'terminal-line-ok',
+  err:  'terminal-line-err',
+  info: 'terminal-line-info',
+  dim:  'terminal-line-dim',
+};
 
 const LogPanel: React.FC<LogPanelProps> = ({ logs }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -14,24 +34,26 @@ const LogPanel: React.FC<LogPanelProps> = ({ logs }) => {
   }, [logs]);
 
   return (
-    <div className="mt-4">
-      <div 
-        ref={scrollRef}
-        className="bg-base border border-border rounded-6 p-3 max-h-[120px] overflow-y-auto font-mono text-[12px] text-muted5 flex flex-col gap-1"
-      >
-        {logs.map((log, i) => {
-          let prefix = '⟳';
-          if (log.includes('Complete') || log.includes('Done') || log.includes('✓')) prefix = '✓';
-          if (log.includes('Error') || log.includes('Failed') || log.includes('✗')) prefix = '✗';
-          
-          return (
-            <div key={i} className="flex gap-2">
-              <span className="shrink-0">{prefix}</span>
-              <span>{log}</span>
-            </div>
-          );
-        })}
-        {logs.length === 0 && <div className="italic">Waiting for logs...</div>}
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <Terminal className="w-[12px] h-[12px] text-muted4" />
+        <span className="font-mono text-[9px] text-muted4 uppercase tracking-[0.12em]">
+          Pipeline Log
+        </span>
+      </div>
+      <div ref={scrollRef} className="terminal-panel">
+        {logs.length === 0 ? (
+          <span className="terminal-line-dim italic">Waiting for ingestion…</span>
+        ) : (
+          logs.map((log, i) => {
+            const { type, text } = parseLine(log);
+            return (
+              <div key={i} className={colourMap[type]}>
+                {text}
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

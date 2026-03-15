@@ -1,80 +1,95 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDocuments } from '../api/client';
-import Button from '../components/shared/Button';
+
+const features = [
+  {
+    emoji: '🔒',
+    title: '100% Offline',
+    desc:  'No data leaves your device. Every model and index runs locally.',
+  },
+  {
+    emoji: '📎',
+    title: 'Verified Citations',
+    desc:  'Every answer traced to exact page & chunk coordinates.',
+  },
+  {
+    emoji: '🖼',
+    title: 'Text + Images',
+    desc:  'CLIP embeddings + Tesseract OCR — multimodal retrieval.',
+  },
+];
 
 const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const checkDocs = async () => {
-      const docs = await getDocuments();
-      if (docs && docs.length > 0) {
-        navigate('/ingest');
-      } else {
-        setLoading(false);
-      }
-    };
-    checkDocs();
+    getDocuments().then(docs => {
+      if (docs && docs.length > 0) navigate('/ingest');
+      else setChecking(false);
+    });
   }, [navigate]);
 
-  if (loading) return null;
-
-  const features = [
-    {
-      title: '100% Offline',
-      desc: 'No data leaves your device.'
-    },
-    {
-      title: 'Verified Citations',
-      desc: 'Every answer traced to exact page coordinates.'
-    },
-    {
-      title: 'Text + Images',
-      desc: 'Searches diagrams and scans, not just plain text.'
-    }
-  ];
+  if (checking) return null;
 
   return (
-    <div className="max-w-[420px] mx-auto pt-[96px] animate-in fade-in duration-700">
-      <div className="mb-2">
-        <h1 className="font-inter font-medium text-[22px] text-white">LocalLens</h1>
-      </div>
-      
-      <div className="mb-[32px]">
-        <p className="font-inter font-normal text-[14px] text-muted7">
-          Your private document search.<br />
-          Everything runs locally on your machine.
+    <div className="min-h-screen bg-base flex items-center justify-center px-4 animate-fade-in">
+      <div className="w-full max-w-[440px]">
+
+        {/* Logo pill */}
+        <div className="flex justify-center mb-8">
+          <span className="font-mono text-[10px] text-accent uppercase tracking-[0.2em] px-3 py-1 border border-[rgba(124,106,247,0.25)] rounded-full bg-accentDim">
+            LocalLens
+          </span>
+        </div>
+
+        {/* Headline */}
+        <h1 className="text-[32px] font-semibold text-white leading-[1.2] tracking-[-0.02em] text-center mb-3">
+          Your documents,<br />answered privately.
+        </h1>
+        <p className="text-[14px] text-muted7 text-center leading-relaxed mb-10 max-w-[340px] mx-auto">
+          Semantic search, multimodal RAG, and verified citations — all on your machine.
         </p>
-      </div>
-      
-      <div className="border-t border-[#1c1c1f] mb-[32px]" />
-      
-      <div className="flex flex-col mb-[32px]">
-        {features.map((f, i) => (
-          <div key={i} className="flex gap-3 py-[14px] border-b border-raised last:border-0 items-start">
-            <span className="text-muted4 text-[14px] mt-[3px]">→</span>
-            <div className="flex flex-col">
-              <span className="text-muted14 font-medium text-[14px]">{f.title}</span>
-              <span className="text-muted7 font-normal text-[13px]">{f.desc}</span>
+
+        {/* Feature rows */}
+        <div className="border border-border rounded-12 overflow-hidden mb-8">
+          {features.map((f, i) => (
+            <div
+              key={i}
+              className={`
+                flex items-center gap-4 px-5 py-[18px]
+                ${i < features.length - 1 ? 'border-b border-border' : ''}
+              `}
+            >
+              <div className="w-9 h-9 rounded-8 bg-raised border border-border flex items-center justify-center text-[16px] shrink-0">
+                {f.emoji}
+              </div>
+              <div>
+                <div className="text-[14px] font-medium text-muted14 mb-[2px]">{f.title}</div>
+                <div className="text-[12px] text-muted6 leading-snug">{f.desc}</div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-      
-      <div className="border-t border-[#1c1c1f] mb-[32px]" />
-      
-      <Button 
-        variant="primary" 
-        className="w-full h-[42px]"
-        onClick={() => navigate('/ingest')}
-      >
-        Import Your First PDF
-      </Button>
-      
-      <div className="mt-6 text-center text-muted4 text-[12px]">
-        No accounts. No API keys. No internet required.
+          ))}
+        </div>
+
+        {/* CTA */}
+        <button
+          onClick={() => navigate('/ingest')}
+          className="
+            w-full h-[46px] rounded-10 bg-accent hover:bg-accentLight
+            text-[14px] font-medium text-white
+            shadow-[0_0_32px_rgba(124,106,247,0.3)]
+            transition-all duration-200
+            focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-base
+          "
+        >
+          Import Your First PDF →
+        </button>
+
+        <div className="mt-5 text-center font-mono text-[11px] text-muted4 tracking-[0.04em]">
+          No accounts · No API keys · No internet
+        </div>
       </div>
     </div>
   );

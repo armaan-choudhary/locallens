@@ -20,7 +20,7 @@ from storage.milvus_store import (
 from retrieval.dense_retriever import run_dense_retrieval
 from retrieval.bm25_retriever import search as bm25_search, mark_dirty
 from retrieval.rrf_fusion import rrf_fusion
-from generation.prompt_builder import build_prompt
+from generation.prompt_builder import build_prompt, clean_output
 from generation.llm_runner import generate as generate_answer
 from generation.hallucination_checker import verify_answer
 from citation.citation_mapper import map_citations
@@ -159,29 +159,44 @@ async def ingest_files(background_tasks: BackgroundTasks, files: List[UploadFile
     return {"job_id": job_id}
 
 @app.post("/query")
-async def handle_query(request: QueryRequest):
+def handle_query(request: QueryRequest):
     start_time = time.time()
     query = request.query
     
-    # Retrieval
+    print(f"--- Processing Query: {query} ---")
+    
+    # 1. Retrieval
+    ret_start = time.time()
     text_dense, image_dense = run_dense_retrieval(query)
     text_bm25 = bm25_search(query, TOP_K_RETRIEVAL)
     ranked_chunks = rrf_fusion(text_dense, image_dense, text_bm25)
+    print(f"[1] Retrieval Complete: {time.time() - ret_start:.2f}s")
     
-    # Generation
+    # 2. Generation
+    gen_start = time.time()
     prompt = build_prompt(query, ranked_chunks)
-    generated_text = generate_answer(prompt)
-    check_results = verify_answer(generated_text, ranked_chunks)
+    generated_text = clean_output(generate_answer(prompt))
+    print(f"[2] Generation: {time.time() - gen_start:.2f}s")
     
-    # Citations
+    # 3. Verification
+    ver_start = time.time()
+    check_results = verify_answer(generated_text, ranked_chunks)
+    print(f"[3] Hallucination Check Complete: {time.time() - ver_start:.2f}s")
+    
+    # 4. Citations
+    cit_start = time.time()
     citations = map_citations(generated_text, ranked_chunks)
+    print(f"[4] Citation Mapping Complete: {time.time() - cit_start:.2f}s")
+    
+    latency = time.time() - start_time
+    print(f"--- Query Total Latency: {latency:.2f}s ---\n")
     
     return {
         "answer": generated_text,
         "verified": check_results["verified"],
         "flagged_sentences": check_results.get("flagged_sentences", []),
         "citations": citations,
-        "latency_seconds": time.time() - start_time
+        "latency_seconds": latency
     }
 
 if __name__ == "__main__":

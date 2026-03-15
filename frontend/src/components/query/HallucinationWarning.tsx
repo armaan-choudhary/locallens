@@ -1,12 +1,18 @@
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 
-const HallucinationWarning: React.FC = () => {
-  return (
-    <div className="border-left-2 border-muted5 p-2 px-3 bg-surface font-inter text-[12px] text-muted7 mb-4 flex items-center gap-2">
-      <span className="shrink-0">⚠</span>
-      Some sentences could not be verified against source documents.
-    </div>
-  );
-};
+const HallucinationWarning: React.FC = () => (
+  <div className="
+    flex items-start gap-3 mb-4 p-3 rounded-8
+    bg-[rgba(251,191,36,0.06)] border border-[rgba(251,191,36,0.18)]
+    border-l-2 border-l-warning
+  ">
+    <AlertTriangle className="w-[14px] h-[14px] text-warning shrink-0 mt-[1px]" />
+    <p className="text-[13px] text-warning leading-snug">
+      Parts of this answer could not be fully verified against source documents.
+      Flagged sentences are underlined.
+    </p>
+  </div>
+);
 
 export default HallucinationWarning;

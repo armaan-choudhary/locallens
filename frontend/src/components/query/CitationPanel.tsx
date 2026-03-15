@@ -1,6 +1,7 @@
 import React from 'react';
 import type { CitationCard as CitationType } from '../../types';
 import CitationCard from './CitationCard';
+import { BookOpen } from 'lucide-react';
 
 interface CitationPanelProps {
   citations: CitationType[];
@@ -8,19 +9,23 @@ interface CitationPanelProps {
 
 const CitationPanel: React.FC<CitationPanelProps> = ({ citations }) => {
   return (
-    <div className="flex flex-col">
-      <div className="font-mono text-[11px] text-muted4 uppercase tracking-[0.08em] mb-4">
-        Sources
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <BookOpen className="w-[12px] h-[12px] text-muted5" />
+        <span className="font-mono text-[9px] text-muted4 uppercase tracking-[0.12em]">
+          Sources — {citations.length}
+        </span>
       </div>
-      
-      <div className="flex flex-col">
-        {citations.map((citation, i) => (
-          <CitationCard key={i} citation={citation} />
-        ))}
-        {citations.length === 0 && (
-          <div className="text-muted4 text-[13px]">No references found.</div>
-        )}
-      </div>
+
+      {citations.length === 0 ? (
+        <div className="text-muted4 text-[13px] italic">No citations found.</div>
+      ) : (
+        <div>
+          {citations.map((c, i) => (
+            <CitationCard key={i} citation={c} index={i} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,16 +7,114 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body, #root {
-    height: 100%;
-    background: #09090b;
-    color: #e4e4e7;
-    font-family: 'Inter', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
+  height: 100%;
+  background: #08080a;
+  color: #c8c8d8;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-::-webkit-scrollbar              { width: 4px; }
-::-webkit-scrollbar-track        { background: #09090b; }
-::-webkit-scrollbar-thumb        { background: #27272a; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover  { background: #3f3f46; }
+/* ── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar              { width: 3px; height: 3px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: #2a2a34; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover  { background: #3a3a46; }
 
-::selection { background: #27272a; color: #fafafa; }
+::selection { background: rgba(124,106,247,0.25); color: #f0f0f8; }
+
+/* ── Terminal panel ─────────────────────────────── */
+.terminal-panel {
+  background: #030308;
+  border: 1px solid #1a1a22;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.75;
+  max-height: 200px;
+  min-height: 120px;
+  overflow-y: auto;
+  color: #50fa7b;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.terminal-line-dim  { color: #44475a; }
+.terminal-line-ok   { color: #50fa7b; }
+.terminal-line-err  { color: #ff5555; }
+.terminal-line-info { color: #8be9fd; }
+
+/* ── Progress bar ───────────────────────────────── */
+.progress-track {
+  width: 100%;
+  height: 2px;
+  background: #1a1a22;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7c6af7, #a78bfa);
+  border-radius: 1px;
+  transition: width 0.4s ease;
+}
+.progress-fill-indeterminate {
+  width: 40%;
+  animation: indeterminate 1.4s ease-in-out infinite;
+}
+@keyframes indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ── Drop zone ──────────────────────────────────── */
+.drop-zone-active {
+  border-color: #7c6af7 !important;
+  background: rgba(124,106,247,0.06) !important;
+  box-shadow: 0 0 28px rgba(124,106,247,0.15) inset;
+}
+
+/* ── Citation card ──────────────────────────────── */
+.citation-card {
+  border-left: 2px solid #2a2a38;
+  transition: border-color 0.15s ease;
+}
+.citation-card:hover {
+  border-left-color: #7c6af7;
+}
+
+/* ── Answer text ────────────────────────────────── */
+.answer-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #d4d4e8;
+  white-space: pre-wrap;
+}
+.answer-text .flagged {
+  border-bottom: 1px solid #52525b;
+}
+
+/* ── Fade-in animations ─────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fadeUp 0.45s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fadeIn 0.35s ease forwards;
+}
+
+/* ── Subtle input glow on focus ─────────────────── */
+.search-input:focus {
+  outline: none;
+  border-color: #3a3a4e !important;
+  box-shadow: 0 0 0 3px rgba(124,106,247,0.1);
+}

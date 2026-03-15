@@ -1,42 +1,99 @@
 import React, { useState } from 'react';
 import type { CitationCard as CitationType } from '../../types';
-import Badge from '../shared/Badge';
 
 interface CitationCardProps {
   citation: CitationType;
+  index: number;
 }
 
-const CitationCard: React.FC<CitationCardProps> = ({ citation }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const isImage = citation.source_type === 'image';
+  const hasBbox = citation.bbox && citation.bbox.some(v => v !== 0);
+
+  // Sanitise chunk text: trim, fix missing space after hyphenated line breaks
+  const rawText  = (citation.chunk_text || '').trim();
+  const chunkText = rawText
+    .replace(/([a-z])-\n([a-z])/g, '$1$2')   // dehyphenate line breaks
+    .replace(/\s{2,}/g, ' ')                   // collapse multiple spaces
+    .replace(/^\s*ples of /i, 'Examples of ')  // fix orphaned word starts
+    .trim();
+
+  const isLong = chunkText.length > 320;
+
+  // Abbreviate long filenames — keep extension
+  const fname = citation.doc_name || 'Unknown';
+  const displayName = fname.length > 40
+    ? fname.slice(0, 18) + '…' + fname.slice(-12)
+    : fname;
 
   return (
-    <div className="bg-surface border border-border border-l-2 border-l-muted5 rounded-8 p-3 mb-2 flex flex-col">
-      <div className="flex items-center justify-between mb-3">
-        <div className="font-mono text-[12px] text-muted7 truncate max-w-[140px]" title={citation.doc_name}>
-          {citation.doc_name}
-        </div>
-        <div className="flex gap-2">
-          <Badge>pg. {citation.page_number}</Badge>
-          <Badge>{citation.source_type}</Badge>
-        </div>
+    <div
+      className="citation-card bg-card border border-border rounded-10 p-4 mb-3 animate-fade-up"
+      style={{ animationDelay: `${index * 55}ms`, animationFillMode: 'both' }}
+    >
+      {/* Header row */}
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <span className={`
+          font-mono text-[9px] uppercase tracking-[0.12em]
+          px-[7px] py-[2px] rounded-4 border shrink-0
+          ${isImage
+            ? 'bg-[rgba(52,211,153,0.08)] text-success border-[rgba(52,211,153,0.2)]'
+            : 'bg-accentDim text-accentLight border-[rgba(124,106,247,0.2)]'}
+        `}>
+          {isImage ? 'OCR / IMG' : 'TEXT'}
+        </span>
+
+        <span
+          className="text-[12px] font-medium text-muted11 truncate flex-1 min-w-0"
+          title={fname}
+        >
+          {displayName}
+        </span>
+
+        <span className="font-mono text-[10px] text-muted5 shrink-0">
+          pg {citation.page_number}
+        </span>
       </div>
 
-      <div className={`font-mono text-[12px] text-muted5 leading-[1.6] ${!isExpanded ? 'line-clamp-3' : ''}`}>
-        {citation.chunk_text || 'Image reference at the specified page coordinates.'}
-      </div>
-      
-      {citation.chunk_text && citation.chunk_text.length > 200 && (
-        <button 
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-muted4 text-[12px] mt-1 text-left hover:text-muted10 transition-colors focus:outline-none"
+      {/* Chunk text block */}
+      {chunkText ? (
+        <div className={`
+          font-mono text-[11px] leading-[1.75] text-muted7
+          bg-surface border border-border rounded-6 px-3 py-[10px] mb-2
+          ${!expanded && isLong ? 'max-h-[90px] overflow-hidden' : ''}
+        `}>
+          {chunkText}
+        </div>
+      ) : (
+        <div className="font-mono text-[11px] text-muted4 italic mb-2 px-1">
+          Image reference — no text chunk available.
+        </div>
+      )}
+
+      {isLong && (
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="
+            text-[11px] text-muted5 hover:text-muted9
+            transition-colors focus:outline-none mb-2 block
+          "
         >
-          {isExpanded ? 'show less' : 'show more'}
+          {expanded ? '↑ collapse' : '↓ show more'}
         </button>
       )}
 
-      {citation.bbox && (
-        <div className="font-mono text-[11px] text-muted4 mt-2">
-          bbox  {citation.bbox[0]} · {citation.bbox[1]} · {citation.bbox[2]} · {citation.bbox[3]}
+      {/* Bbox row — only for verified image sources */}
+      {hasBbox && citation.bbox && (
+        <div className="font-mono text-[9px] text-muted3 tracking-[0.04em] mt-1">
+          BBOX &nbsp;
+          {[
+            `x₀=${Math.round(citation.bbox[0])}`,
+            `y₀=${Math.round(citation.bbox[1])}`,
+            `x₁=${Math.round(citation.bbox[2])}`,
+            `y₁=${Math.round(citation.bbox[3])}`,
+          ].join('  ')}
         </div>
       )}
     </div>
