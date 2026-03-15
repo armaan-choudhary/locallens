@@ -58,7 +58,7 @@ async def get_documents():
             "filename": d["filename"],
             "page_count": d["page_count"],
             "chunk_count": d["chunk_count"],
-            "ingested_at": d.get("created_at", "").isoformat() if hasattr(d.get("created_at"), "isoformat") else str(d.get("created_at", ""))
+            "ingested_at": d.get("ingested_at", "").isoformat() if hasattr(d.get("ingested_at"), "isoformat") else str(d.get("ingested_at", ""))
         })
     return formatted
 

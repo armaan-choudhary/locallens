@@ -124,7 +124,7 @@ def get_all_documents() -> list:
                        (SELECT count(*) FROM text_chunks WHERE doc_id = d.doc_id) as chunk_count,
                        (SELECT count(*) FROM image_regions WHERE doc_id = d.doc_id) as image_count
                 FROM documents d
-                ORDER BY d.created_at DESC
+                ORDER BY d.ingested_at DESC
             """)
             return cur.fetchall()
     finally:
