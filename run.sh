@@ -40,6 +40,10 @@ sleep 5
 # 3. Start Frontend
 echo -e "${GREEN}[3/3] Starting Vite Frontend...${NC}"
 cd frontend
+if [ ! -d "node_modules" ]; then
+    echo -e "${BLUE}Installing frontend dependencies...${NC}"
+    npm install
+fi
 npm run dev &
 FRONTEND_PID=$!
 
