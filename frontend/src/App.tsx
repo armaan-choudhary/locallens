@@ -35,14 +35,19 @@ const App: React.FC = () => {
   return (
     <Router>
       <div className="bg-base min-h-screen text-muted10 font-inter">
-        {hasDocs && <Topbar />}
         <Routes>
           <Route 
             path="/" 
             element={hasDocs ? <Navigate to="/ingest" replace /> : <OnboardingPage />} 
           />
-          <Route path="/ingest" element={<IngestPage />} />
-          <Route path="/query" element={<QueryPage />} />
+          <Route 
+            path="/ingest" 
+            element={<><Topbar /><IngestPage /></>} 
+          />
+          <Route 
+            path="/query" 
+            element={<><Topbar /><QueryPage /></>} 
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
