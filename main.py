@@ -12,7 +12,10 @@ from embeddings.text_embedder import embed_texts
 from embeddings.image_embedder import embed_images
 from storage.postgres_store import (
     insert_document, insert_text_chunk, insert_image_region, 
-    get_all_documents, delete_document_data, init_postgres
+    get_all_documents, delete_document_data, init_postgres,
+    create_session, get_all_sessions, get_messages_for_session, 
+    add_message, delete_session,
+    add_doc_to_session, remove_doc_from_session, get_docs_for_session
 )
 from storage.milvus_store import (
     insert_text_vectors, insert_image_vectors, init_milvus, delete_by_doc_id
@@ -20,7 +23,7 @@ from storage.milvus_store import (
 from retrieval.dense_retriever import run_dense_retrieval
 from retrieval.bm25_retriever import search as bm25_search, mark_dirty
 from retrieval.rrf_fusion import rrf_fusion
-from generation.prompt_builder import build_prompt, clean_output
+from generation.prompt_builder import build_prompt
 from generation.llm_runner import generate as generate_answer
 from generation.hallucination_checker import verify_answer
 from citation.citation_mapper import map_citations
@@ -42,6 +45,7 @@ jobs = {}
 
 class QueryRequest(BaseModel):
     query: str
+    session_id: str = None
 
 @app.on_event("startup")
 async def startup_event():
@@ -68,6 +72,46 @@ async def get_documents():
 async def delete_doc(doc_id: str):
     delete_document_data(doc_id)
     delete_by_doc_id(doc_id)
+    mark_dirty()
+    return {"success": True}
+
+# ── Chat Endpoints ────────────────────────────────────────────────────────────
+
+@app.get("/sessions")
+async def list_sessions():
+    return get_all_sessions()
+
+@app.post("/sessions")
+async def start_session(title: str = "New Chat"):
+    session_id = str(uuid.uuid4())
+    create_session(session_id, title)
+    return {"session_id": session_id}
+
+@app.get("/sessions/{session_id}/messages")
+async def list_messages(session_id: str):
+    return get_messages_for_session(session_id)
+
+@app.delete("/sessions/{session_id}")
+async def remove_session(session_id: str):
+    delete_session(session_id)
+    return {"success": True}
+
+@app.get("/sessions/{session_id}/documents")
+async def list_session_docs(session_id: str):
+    """Return the list of doc_ids scoped to this session."""
+    doc_ids = get_docs_for_session(session_id)
+    return {"doc_ids": doc_ids}
+
+@app.post("/sessions/{session_id}/documents/{doc_id}")
+async def add_session_doc(session_id: str, doc_id: str):
+    """Associate a document with a session."""
+    add_doc_to_session(session_id, doc_id)
+    return {"success": True}
+
+@app.delete("/sessions/{session_id}/documents/{doc_id}")
+async def remove_session_doc(session_id: str, doc_id: str):
+    """Remove a document from a session's scope."""
+    remove_doc_from_session(session_id, doc_id)
     return {"success": True}
 
 @app.get("/ingest/status/{job_id}")
@@ -162,20 +206,32 @@ async def ingest_files(background_tasks: BackgroundTasks, files: List[UploadFile
 def handle_query(request: QueryRequest):
     start_time = time.time()
     query = request.query
+    session_id = request.session_id
     
-    print(f"--- Processing Query: {query} ---")
+    print(f"--- Processing Query: {query} (Session: {session_id}) ---")
     
-    # 1. Retrieval
+    # 0. Get History and session-scoped doc_ids
+    history = []
+    session_doc_ids = None  # None = no filter = global search
+    if session_id:
+        history = get_messages_for_session(session_id)
+        scoped = get_docs_for_session(session_id)
+        if scoped:  # only apply filter if session has docs selected
+            session_doc_ids = scoped
+        # Save user message
+        add_message(str(uuid.uuid4()), session_id, "user", query)
+
+    # 1. Retrieval (filtered by session doc scope if set)
     ret_start = time.time()
-    text_dense, image_dense = run_dense_retrieval(query)
-    text_bm25 = bm25_search(query, TOP_K_RETRIEVAL)
+    text_dense, image_dense = run_dense_retrieval(query, doc_ids=session_doc_ids)
+    text_bm25 = bm25_search(query, TOP_K_RETRIEVAL, doc_ids=session_doc_ids)
     ranked_chunks = rrf_fusion(text_dense, image_dense, text_bm25)
     print(f"[1] Retrieval Complete: {time.time() - ret_start:.2f}s")
     
     # 2. Generation
     gen_start = time.time()
-    prompt = build_prompt(query, ranked_chunks)
-    generated_text = clean_output(generate_answer(prompt))
+    messages = build_prompt(query, ranked_chunks, history)
+    generated_text = generate_answer(messages)
     print(f"[2] Generation: {time.time() - gen_start:.2f}s")
     
     # 3. Verification
@@ -191,6 +247,10 @@ def handle_query(request: QueryRequest):
     latency = time.time() - start_time
     print(f"--- Query Total Latency: {latency:.2f}s ---\n")
     
+    # 5. Save assistant response
+    if session_id:
+        add_message(str(uuid.uuid4()), session_id, "assistant", generated_text, citations)
+
     return {
         "answer": generated_text,
         "verified": check_results["verified"],

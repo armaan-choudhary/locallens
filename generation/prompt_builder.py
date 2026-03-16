@@ -2,15 +2,18 @@ import re
 
 # ── Prompt builder ────────────────────────────────────────────────────────────
 
-def build_prompt(query: str, retrieved_chunks: list[dict]) -> str:
+def build_prompt(query: str, retrieved_chunks: list[dict], history: list[dict] = None) -> list[dict]:
     """
-    Build a clean prompt where context citations are opaque numeric tags [1], [2]
-    so the LLM cannot echo raw filenames, page numbers, or source labels.
+    Build a list of chat messages for create_chat_completion.
+    Context excerpts are numbered [1], [2]... so the LLM cannot echo raw filenames.
+    Injections multi-turn history (last 5 turns) for context continuity.
     """
     context_parts = []
 
     for idx, chunk in enumerate(retrieved_chunks, start=1):
-        if chunk["source_type"] == "text":
+        # retrieved_chunks might contain 'source_type' or we infer it
+        source_type = chunk.get("source_type", "text")
+        if source_type == "text":
             snippet = chunk.get("text", "").strip()
             if len(snippet) > 800:
                 snippet = snippet[:800] + "…"
@@ -22,18 +25,26 @@ def build_prompt(query: str, retrieved_chunks: list[dict]) -> str:
     if len(context_str) > 10_000:
         context_str = context_str[:10_000] + "\n[truncated]"
 
-    prompt = (
-        "You are a concise, factual document assistant.\n"
-        "Use ONLY the numbered excerpts below to answer. "
-        "Write plain prose. No bullet points unless explicitly asked. "
-        "No greetings, no sign-offs, no emojis. "
-        "If the excerpts do not contain enough information, say so in one sentence.\n\n"
+    system_content = (
+        "You are a concise, factual document assistant. "
+        "Answer using ONLY the numbered excerpts provided. "
+        "Write plain prose. Do not use Markdown, bullet points, headings, or code blocks. "
+        "Do not greet or sign off.\n\n"
         "EXCERPTS:\n"
-        f"{context_str}\n\n"
-        f"QUESTION: {query}\n\n"
-        "ANSWER (plain prose, no metadata, no source labels):\n"
+        f"{context_str}"
     )
-    return prompt
+
+    messages = [{"role": "system", "content": system_content}]
+
+    # Inject multi-turn history
+    if history:
+        for turn in history[-5:]:
+            messages.append({"role": turn["role"], "content": turn["content"]})
+
+    # Current user query
+    messages.append({"role": "user", "content": query})
+
+    return messages
 
 
 # ── Post-processor ────────────────────────────────────────────────────────────
@@ -49,7 +60,7 @@ _EMOJI_RE = re.compile(
 
 # Patterns that signal the LLM started a closing or meta-commentary block
 _CLOSING_TRIGGERS = re.compile(
-    r"\n+(Best regards|Please (note|let|feel)|Thank you|Yours|Sincerely"
+    r"(Best regards|Please (note|let|feel)|Thank you|Yours|Sincerely"
     r"|In summary[,]? I |Note that I |I hope this|LocalLens\s*\n)",
     re.IGNORECASE,
 )

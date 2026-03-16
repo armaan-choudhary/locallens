@@ -4,12 +4,11 @@ from storage.milvus_store import search_text, search_image
 from storage.postgres_store import get_chunk_by_milvus_id, get_image_by_milvus_id
 from config import TOP_K_RETRIEVAL
 
-def run_dense_retrieval(query: str):
+def run_dense_retrieval(query: str, doc_ids: list = None):
     """
     Search Milvus for text and image embeddings.
+    If doc_ids is provided, only those documents are searched.
     Returns: (text_results, image_results)
-    text_results: [{"chunk_id", "text", "page", "doc_id", "score"}, ...]
-    image_results: [{"image_id", "page", "doc_id", "bbox", "score", "nearby_chunk_id"}, ...]
     """
     if not query.strip():
         return [], []
@@ -17,8 +16,8 @@ def run_dense_retrieval(query: str):
     text_emb = embed_texts([query])
     image_emb = embed_text_for_image(query)
     
-    milvus_text_res = search_text(text_emb, TOP_K_RETRIEVAL)
-    milvus_image_res = search_image(image_emb, TOP_K_RETRIEVAL)
+    milvus_text_res = search_text(text_emb, TOP_K_RETRIEVAL, doc_ids=doc_ids)
+    milvus_image_res = search_image(image_emb, TOP_K_RETRIEVAL, doc_ids=doc_ids)
     
     text_results = []
     for hit in milvus_text_res:

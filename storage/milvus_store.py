@@ -71,16 +71,22 @@ def insert_image_vectors(embeddings: np.ndarray, doc_ids: list) -> list[int]:
     collection.flush()
     return res.primary_keys
 
-def search_text(query_embedding: np.ndarray, top_k: int) -> list[dict]:
+def search_text(query_embedding: np.ndarray, top_k: int, doc_ids: list = None) -> list[dict]:
     # Query embedding should be [1, dim]
     collection = Collection(MILVUS_COLLECTION_TEXT)
     
     search_params = {"metric_type": "L2", "params": {"ef": min(max(top_k * 2, 64), 200)}}
+    expr = None
+    if doc_ids:
+        ids_str = ", ".join(f"'{d}'" for d in doc_ids)
+        expr = f"doc_id in [{ids_str}]"
+
     results = collection.search(
         data=query_embedding.tolist(),
         anns_field="embedding",
         param=search_params,
         limit=top_k,
+        expr=expr,
         output_fields=["doc_id"]
     )
     
@@ -94,15 +100,21 @@ def search_text(query_embedding: np.ndarray, top_k: int) -> list[dict]:
             })
     return output
 
-def search_image(query_embedding: np.ndarray, top_k: int) -> list[dict]:
+def search_image(query_embedding: np.ndarray, top_k: int, doc_ids: list = None) -> list[dict]:
     collection = Collection(MILVUS_COLLECTION_IMAGE)
     
     search_params = {"metric_type": "L2", "params": {"ef": min(max(top_k * 2, 64), 200)}}
+    expr = None
+    if doc_ids:
+        ids_str = ", ".join(f"'{d}'" for d in doc_ids)
+        expr = f"doc_id in [{ids_str}]"
+
     results = collection.search(
         data=query_embedding.tolist(),
         anns_field="embedding",
         param=search_params,
         limit=top_k,
+        expr=expr,
         output_fields=["doc_id"]
     )
     

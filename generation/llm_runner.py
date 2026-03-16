@@ -16,11 +16,7 @@ _GPU_LAYERS = 35        # change to -1 for full GPU offload if VRAM allows
 _THREADS    = 8
 _USE_MLOCK  = True
 
-_STOP_TOKENS = [
-    "</s>", "Human:", "User:", "<|eot_id|>", "<|end_of_text|>",
-    "Best regards", "Please let me know", "Please feel free", "Thank you",
-    "\n\nBest", "\n\nPlease", "\n--",
-]
+_STOP_TOKENS = ["<|eot_id|>", "<|end_of_text|>"]
 
 def get_llm() -> Llama | None:
     global _llm
@@ -43,29 +39,29 @@ def get_llm() -> Llama | None:
     return _llm
 
 
-def generate(prompt: str) -> str:
-    """Blocking single-shot generation."""
+def generate(messages: list) -> str:
+    """Blocking single-shot generation using chat completion API."""
     llm = get_llm()
     if not llm:
         return "LLM model not loaded. Please download the Llama-3 GGUF file."
 
-    response = llm(
-        prompt,
+    response = llm.create_chat_completion(
+        messages=messages,
         max_tokens=MAX_NEW_TOKENS,
         temperature=TEMPERATURE,
+        top_p=0.9,
+        top_k=40,
+        repeat_penalty=1.1,
         stop=_STOP_TOKENS,
-        echo=False,
     )
-    raw = response["choices"][0]["text"].strip()
+    raw = response["choices"][0]["message"]["content"].strip()
     return clean_output(raw)
 
 
-def generate_stream(prompt: str):
+def generate_stream(messages: list):
     """
-    Streaming generator – yields the *cumulative* answer string after each token
-    so callers can simply pass the latest yielded value to the UI.
-
-    Falls back to a single blocking call if the backend doesn't support streaming.
+    Streaming generator – yields the *cumulative* answer string after each token.
+    Falls back to a single blocking call if streaming fails.
     """
     llm = get_llm()
     if not llm:
@@ -73,22 +69,25 @@ def generate_stream(prompt: str):
         return
 
     try:
-        stream = llm.create_completion(
-            prompt,
+        stream = llm.create_chat_completion(
+            messages=messages,
             max_tokens=MAX_NEW_TOKENS,
             temperature=TEMPERATURE,
+            top_p=0.9,
+            top_k=40,
+            repeat_penalty=1.1,
             stop=_STOP_TOKENS,
             stream=True,
-            echo=False,
         )
 
         accumulated = ""
         for chunk in stream:
-            token_text = chunk["choices"][0].get("text", "")
+            delta = chunk["choices"][0].get("delta", {})
+            token_text = delta.get("content", "")
             accumulated += token_text
             yield accumulated
 
     except Exception as exc:
         # Fall back to blocking if streaming fails
         print(f"[llm_runner] Streaming failed ({exc}), falling back to blocking generate.")
-        yield generate(prompt)
+        yield generate(messages)

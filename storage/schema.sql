@@ -31,3 +31,26 @@ CREATE TABLE IF NOT EXISTS image_regions (
     nearby_chunk_id TEXT REFERENCES text_chunks(chunk_id)
     -- this is the cross-modal link: image is tied to its nearest text chunk
 );
+
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    session_id  TEXT PRIMARY KEY,
+    title       TEXT NOT NULL,
+    created_at  TIMESTAMP DEFAULT NOW(),
+    updated_at  TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    message_id  TEXT PRIMARY KEY,
+    session_id  TEXT REFERENCES chat_sessions(session_id) ON DELETE CASCADE,
+    role        TEXT NOT NULL, -- 'user' or 'assistant'
+    content     TEXT NOT NULL,
+    citations   JSONB,         -- store the list of citations as JSON
+    created_at  TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS session_documents (
+    session_id  TEXT REFERENCES chat_sessions(session_id) ON DELETE CASCADE,
+    doc_id      TEXT REFERENCES documents(doc_id) ON DELETE CASCADE,
+    added_at    TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (session_id, doc_id)
+);

@@ -28,26 +28,33 @@ def build_index_if_needed():
             _bm25_index = None
         _is_dirty = False
 
-def search(query: str, top_k: int = TOP_K_RETRIEVAL) -> list[dict]:
+def search(query: str, top_k: int = TOP_K_RETRIEVAL, doc_ids: list = None) -> list[dict]:
     """
     Returns text chunks matching the given BM25 keyword query.
+    If doc_ids is provided, only those documents are returned.
     [{"chunk_id", "text", "page", "doc_id", "filename", "score"}, ...]
     """
     build_index_if_needed()
     if not _bm25_index or not _all_chunks_cache:
         return []
         
+    doc_id_set = set(doc_ids) if doc_ids else None
     query_tokens = query.lower().split()
     scores = _bm25_index.get_scores(query_tokens)
     
     # rank by scores
-    top_indices = scores.argsort()[::-1][:top_k]
+    top_indices = scores.argsort()[::-1]
     
     text_results = []
     for idx in top_indices:
+        if len(text_results) >= top_k:
+            break
         score = scores[idx]
         if score > 0:
             pg_meta = _all_chunks_cache[idx]
+            # Apply doc_id filter if specified
+            if doc_id_set and pg_meta["doc_id"] not in doc_id_set:
+                continue
             text_results.append({
                 "chunk_id": pg_meta["chunk_id"],
                 "text": pg_meta["text"],

@@ -157,3 +157,119 @@ def delete_document_data(doc_id: str):
         conn.commit()
     finally:
         pool.putconn(conn)
+
+# ── Chat Support ─────────────────────────────────────────────────────────────
+
+def create_session(session_id: str, title: str):
+    pool = get_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO chat_sessions (session_id, title) VALUES (%s, %s)",
+                (session_id, title)
+            )
+        conn.commit()
+    finally:
+        pool.putconn(conn)
+
+def get_all_sessions() -> list:
+    pool = get_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM chat_sessions ORDER BY updated_at DESC")
+            return cur.fetchall()
+    finally:
+        pool.putconn(conn)
+
+def delete_session(session_id: str):
+    pool = get_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM chat_sessions WHERE session_id = %s", (session_id,))
+        conn.commit()
+    finally:
+        pool.putconn(conn)
+
+def add_message(message_id: str, session_id: str, role: str, content: str, citations: list = None):
+    import json
+    pool = get_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO chat_messages (message_id, session_id, role, content, citations)
+                   VALUES (%s, %s, %s, %s, %s)""",
+                (message_id, session_id, role, content, json.dumps(citations) if citations else None)
+            )
+            # Update session timestamp
+            cur.execute(
+                "UPDATE chat_sessions SET updated_at = NOW() WHERE session_id = %s",
+                (session_id,)
+            )
+        conn.commit()
+    finally:
+        pool.putconn(conn)
+
+def get_messages_for_session(session_id: str) -> list:
+    import json
+    pool = get_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                "SELECT * FROM chat_messages WHERE session_id = %s ORDER BY created_at ASC",
+                (session_id,)
+            )
+            rows = cur.fetchall()
+            for r in rows:
+                if r["citations"]:
+                    r["citations"] = json.loads(r["citations"]) if isinstance(r["citations"], str) else r["citations"]
+            return rows
+    finally:
+        pool.putconn(conn)
+
+# ── Session Document Management ───────────────────────────────────────────────
+
+def add_doc_to_session(session_id: str, doc_id: str):
+    pool = get_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO session_documents (session_id, doc_id)
+                   VALUES (%s, %s) ON CONFLICT DO NOTHING""",
+                (session_id, doc_id)
+            )
+        conn.commit()
+    finally:
+        pool.putconn(conn)
+
+def remove_doc_from_session(session_id: str, doc_id: str):
+    pool = get_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM session_documents WHERE session_id = %s AND doc_id = %s",
+                (session_id, doc_id)
+            )
+        conn.commit()
+    finally:
+        pool.putconn(conn)
+
+def get_docs_for_session(session_id: str) -> list[str]:
+    """Returns a list of doc_ids associated with a session."""
+    pool = get_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT doc_id FROM session_documents WHERE session_id = %s",
+                (session_id,)
+            )
+            return [row[0] for row in cur.fetchall()]
+    finally:
+        pool.putconn(conn)

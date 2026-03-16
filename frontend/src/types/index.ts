@@ -32,3 +32,19 @@ export interface IngestionStatus {
   stage: 'extracting' | 'ocr' | 'embedding' | 'indexing' | 'done' | 'error'
   log_lines: string[]
 }
+
+export interface ChatSession {
+  session_id: string
+  title: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatMessage {
+  message_id: string
+  session_id: string
+  role: 'user' | 'assistant'
+  content: string
+  citations?: CitationCard[]
+  created_at: string
+}
