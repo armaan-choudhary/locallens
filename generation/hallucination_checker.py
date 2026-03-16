@@ -1,19 +1,14 @@
 import numpy as np
 import re
-from sentence_transformers import util
 from embeddings.text_embedder import embed_texts
 
 def split_sentences(text: str) -> list[str]:
-    # Basic punctuation splitting that keeps sentences reasonably intact
-    # Splitting strictly on .!? might be too naïve, but works for checking sentences
+    # Segment text into discrete sentences for granular verification
     sentences = re.split(r'(?<=[.!?])\s+', text)
     return [s.strip() for s in sentences if len(s.strip()) > 5]
 
 def verify_answer(answer: str, context_chunks: list[dict], threshold: float = 0.35) -> dict:
-    """
-    Computes cosine similarity between generated answer sentences and context chunks.
-    Flags sentences scoring below the threshold.
-    """
+    # Cross-reference generated text against context chunks using cosine similarity
     if not answer or not context_chunks:
         return {"verified": True, "flagged_sentences": [], "support_scores": []}
         
@@ -21,26 +16,20 @@ def verify_answer(answer: str, context_chunks: list[dict], threshold: float = 0.
     if not sentences:
         return {"verified": True, "flagged_sentences": [], "support_scores": []}
         
-    # Gather context texts
     text_contexts = []
     for c in context_chunks:
         if c["source_type"] == "text" and "text" in c:
             text_contexts.append(c["text"])
             
     if not text_contexts:
-        # If the answer was generated only from image context info, we can't text-verify easily
         return {"verified": False, "flagged_sentences": [{"sentence": "No textual context available", "max_similarity": 0.0}], "support_scores": []}
 
-    # Embed generated sentences
+    # Embed both generated sentences and source context for similarity scoring
     sentence_embeddings = embed_texts(sentences)
-    # Embed context chunks
     context_embeddings = embed_texts(text_contexts)
     
-    # Compute dot product (since already L2 normalized, dot product == cosine similarity)
-    # sentence_embeddings is (N, 384), context_embeddings is (M, 384)
-    # Result is (N, M)
+    # Calculate similarity matrix via dot product (normalized embeddings)
     similarities = np.dot(sentence_embeddings, context_embeddings.T)
-    
     max_similarities = similarities.max(axis=1)
     
     flagged_sentences = []

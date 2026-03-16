@@ -6,12 +6,18 @@ interface FileQueueProps {
   onRemove: (index: number) => void;
 }
 
+/**
+ * Formats file size into human-readable strings.
+ */
 const formatBytes = (bytes: number) => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+/**
+ * Displays a list of files queued for ingestion with removal options.
+ */
 const FileQueue: React.FC<FileQueueProps> = ({ files, onRemove }) => {
   if (files.length === 0) return null;
 

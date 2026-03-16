@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS documents (
 
 CREATE TABLE IF NOT EXISTS text_chunks (
     chunk_id    TEXT PRIMARY KEY,
-    doc_id      TEXT REFERENCES documents(doc_id),
+    doc_id      TEXT REFERENCES documents(doc_id) ON DELETE CASCADE,
     page_number INTEGER,
     chunk_index INTEGER,
     char_start  INTEGER,
@@ -20,16 +20,16 @@ CREATE TABLE IF NOT EXISTS text_chunks (
 
 CREATE TABLE IF NOT EXISTS image_regions (
     image_id    TEXT PRIMARY KEY,
-    doc_id      TEXT REFERENCES documents(doc_id),
+    doc_id      TEXT REFERENCES documents(doc_id) ON DELETE CASCADE,
     page_number INTEGER,
     image_index INTEGER,
     bbox_x1     INTEGER,
     bbox_y1     INTEGER,
     bbox_x2     INTEGER,
     bbox_y2     INTEGER,
-    milvus_id   BIGINT,         -- maps to Milvus vector ID
-    nearby_chunk_id TEXT REFERENCES text_chunks(chunk_id)
-    -- this is the cross-modal link: image is tied to its nearest text chunk
+    milvus_id   BIGINT,         -- maps to Milvus vector ID,
+    nearby_chunk_id TEXT REFERENCES text_chunks(chunk_id) ON DELETE SET NULL,
+    image_path  TEXT            -- relative path to stored image file
 );
 
 CREATE TABLE IF NOT EXISTS chat_sessions (
@@ -45,6 +45,10 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     role        TEXT NOT NULL, -- 'user' or 'assistant'
     content     TEXT NOT NULL,
     citations   JSONB,         -- store the list of citations as JSON
+    support_scores JSONB,      -- store support scores per sentence
+    flagged_sentences JSONB,   -- store which sentences were flagged
+    verified    BOOLEAN DEFAULT TRUE,
+    scoped_docs JSONB,         -- store the list of documents active at the time
     created_at  TIMESTAMP DEFAULT NOW()
 );
 

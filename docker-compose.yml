@@ -44,7 +44,7 @@ services:
       ETCD_ENDPOINTS: etcd:2379
       MINIO_ADDRESS: minio:9000
     volumes:
-      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/milvus:/var/lib/milvus
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/var/lib/milvus:/var/lib/milvus
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
       interval: 30s
@@ -56,6 +56,23 @@ services:
     depends_on:
       - "etcd"
       - "minio"
+
+  postgres:
+    container_name: locallens-postgres
+    image: postgres:15
+    environment:
+      POSTGRES_USER: locallens
+      POSTGRES_PASSWORD: locallens
+      POSTGRES_DB: locallens
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U locallens -d locallens"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   default:

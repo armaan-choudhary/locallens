@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
+import ProgressBar from '../ui/ProgressBar';
 
 interface IngestionProgressProps {
   filename: string;
@@ -17,6 +18,9 @@ const stageLabel: Record<string, string> = {
   error:      'Error — see log below',
 };
 
+/**
+ * Component displaying real-time progress of the document ingestion pipeline.
+ */
 const IngestionProgress: React.FC<IngestionProgressProps> = ({
   filename,
   currentPage,
@@ -28,49 +32,41 @@ const IngestionProgress: React.FC<IngestionProgressProps> = ({
   const pct     = totalPages > 0 ? Math.min((currentPage / totalPages) * 100, 100) : 0;
 
   return (
-    <div className="w-full rounded-10 bg-surface border border-border p-5 mb-4">
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="font-mono text-[11px] text-muted5 uppercase tracking-[0.1em]">
-          Pipeline Status
+    <div className="w-full rounded-10 bg-surface border border-border p-5 mb-4 shadow-xl">
+      <div className="flex items-center justify-between mb-5">
+        <div className="font-mono text-[9px] text-muted4 uppercase tracking-[0.2em]">
+          Ingestion Pipeline
         </div>
         {isDone && (
-          <div className="flex items-center gap-1.5 text-success text-[12px] font-medium">
-            <CheckCircle className="w-[13px] h-[13px]" />
-            Done
+          <div className="flex items-center gap-1.5 text-success text-[12px] font-medium animate-fade-in">
+            <CheckCircle className="w-[14px] h-[14px]" />
+            All tasks complete
           </div>
         )}
       </div>
 
-      {/* Filename */}
-      <div className="text-[13px] font-medium text-muted11 truncate mb-4" title={filename}>
+      <div className="text-[14px] font-semibold text-white truncate mb-6" title={filename}>
         {filename}
       </div>
 
-      {/* Progress bar */}
-      <div className="progress-track mb-3">
-        {isDone ? (
-          <div className="progress-fill" style={{ width: '100%' }} />
-        ) : isError ? (
-          <div className="h-full bg-error rounded-[1px]" style={{ width: `${pct || 30}%` }} />
-        ) : totalPages > 0 ? (
-          <div className="progress-fill" style={{ width: `${pct}%` }} />
-        ) : (
-          <div className="progress-fill progress-fill-indeterminate" />
-        )}
+      <div className="mb-6">
+        <ProgressBar 
+          progress={isDone ? 100 : pct}
+          isIndeterminate={!isDone && !isError && totalPages === 0}
+          color={isError ? 'error' : isDone ? 'success' : 'accent'}
+          size="md"
+          label={stageLabel[stage] || stage}
+          showPercentage={totalPages > 0}
+        />
       </div>
 
-      {/* Stage label + page count */}
-      <div className="flex items-center justify-between">
-        <div className={`font-mono text-[11px] ${isError ? 'text-error' : 'text-muted6'}`}>
-          {stageLabel[stage] || stage}
-        </div>
-        {totalPages > 0 && !isDone && (
-          <div className="font-mono text-[11px] text-muted4">
-            pg {currentPage} / {totalPages}
+      {totalPages > 0 && !isDone && (
+        <div className="flex justify-end">
+          <div className="px-2 py-0.5 rounded-4 bg-raised border border-border font-mono text-[10px] text-muted5">
+            PAGE {currentPage} OF {totalPages}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

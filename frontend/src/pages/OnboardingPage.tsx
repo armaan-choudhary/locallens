@@ -1,3 +1,9 @@
+/**
+ * OnboardingPage Component
+ * Provides the initial entry point for users to understand LocalLens features
+ * and begin the document ingestion process.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDocuments } from '../api/client';
@@ -24,6 +30,9 @@ const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
 
+  /**
+   * Check for existing documents to determine if onboarding is necessary.
+   */
   useEffect(() => {
     getDocuments().then(docs => {
       if (docs && docs.length > 0) navigate('/ingest');
@@ -37,14 +46,12 @@ const OnboardingPage: React.FC = () => {
     <div className="min-h-screen bg-base flex items-center justify-center px-4 animate-fade-in">
       <div className="w-full max-w-[440px]">
 
-        {/* Logo pill */}
         <div className="flex justify-center mb-8">
-          <span className="font-mono text-[10px] text-accent uppercase tracking-[0.2em] px-3 py-1 border border-[rgba(124,106,247,0.25)] rounded-full bg-accentDim">
+          <span className="font-mono text-[10px] text-accent uppercase tracking-[0.2em] px-3 py-1 border border-white/20 rounded-full bg-accentDim">
             LocalLens
           </span>
         </div>
 
-        {/* Headline */}
         <h1 className="text-[32px] font-semibold text-white leading-[1.2] tracking-[-0.02em] text-center mb-3">
           Your documents,<br />answered privately.
         </h1>
@@ -52,7 +59,6 @@ const OnboardingPage: React.FC = () => {
           Semantic search, multimodal RAG, and verified citations — all on your machine.
         </p>
 
-        {/* Feature rows */}
         <div className="border border-border rounded-12 overflow-hidden mb-8">
           {features.map((f, i) => (
             <div
@@ -73,13 +79,12 @@ const OnboardingPage: React.FC = () => {
           ))}
         </div>
 
-        {/* CTA */}
         <button
           onClick={() => navigate('/ingest')}
           className="
             w-full h-[46px] rounded-10 bg-accent hover:bg-accentLight
-            text-[14px] font-medium text-white
-            shadow-[0_0_32px_rgba(124,106,247,0.3)]
+            text-[14px] font-medium text-base
+            shadow-glow
             transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-base
           "

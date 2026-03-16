@@ -8,113 +8,115 @@
 
 html, body, #root {
   height: 100%;
-  background: #08080a;
-  color: #c8c8d8;
+  background: #000000;
+  color: #a3a3a3;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Scrollbar ──────────────────────────────────── */
-::-webkit-scrollbar              { width: 3px; height: 3px; }
+/* ── Minimalist Monochrome Scrollbar ──────────────── */
+::-webkit-scrollbar              { width: 2px; height: 2px; }
 ::-webkit-scrollbar-track        { background: transparent; }
-::-webkit-scrollbar-thumb        { background: #2a2a34; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover  { background: #3a3a46; }
+::-webkit-scrollbar-thumb        { background: #262626; border-radius: 1px; }
+::-webkit-scrollbar-thumb:hover  { background: #404040; }
 
-::selection { background: rgba(124,106,247,0.25); color: #f0f0f8; }
+::selection { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
 
-/* ── Terminal panel ─────────────────────────────── */
+/* ── Monochrome Terminal Panel ───────────────────── */
 .terminal-panel {
-  background: #030308;
-  border: 1px solid #1a1a22;
-  border-radius: 10px;
-  padding: 14px 16px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 16px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  line-height: 1.75;
-  max-height: 200px;
-  min-height: 120px;
+  font-size: 11px;
+  line-height: 1.8;
+  max-height: 250px;
   overflow-y: auto;
-  color: #50fa7b;
+  color: #e5e5e5;
   white-space: pre-wrap;
   word-break: break-all;
 }
 
-.terminal-line-dim  { color: #44475a; }
-.terminal-line-ok   { color: #50fa7b; }
-.terminal-line-err  { color: #ff5555; }
-.terminal-line-info { color: #8be9fd; }
+.terminal-line-dim  { color: #404040; }
+.terminal-line-ok   { color: #ffffff; font-weight: 500; }
+.terminal-line-err  { color: #ffffff; text-decoration: underline; text-decoration-style: dotted; }
+.terminal-line-info { color: #a3a3a3; }
 
-/* ── Progress bar ───────────────────────────────── */
+/* ── High-Contrast Progress Bar ───────────────────── */
 .progress-track {
   width: 100%;
   height: 2px;
-  background: #1a1a22;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 1px;
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #7c6af7, #a78bfa);
+  background: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
   border-radius: 1px;
-  transition: width 0.4s ease;
-}
-.progress-fill-indeterminate {
-  width: 40%;
-  animation: indeterminate 1.4s ease-in-out infinite;
-}
-@keyframes indeterminate {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(350%); }
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Drop zone ──────────────────────────────────── */
-.drop-zone-active {
-  border-color: #7c6af7 !important;
-  background: rgba(124,106,247,0.06) !important;
-  box-shadow: 0 0 28px rgba(124,106,247,0.15) inset;
+@keyframes indeterminate-progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+.animate-indeterminate-progress {
+  animation: indeterminate-progress 2s infinite linear;
 }
 
-/* ── Citation card ──────────────────────────────── */
+/* ── Monochrome Citation Card ────────────────────── */
 .citation-card {
-  border-left: 2px solid #2a2a38;
-  transition: border-color 0.15s ease;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
 }
 .citation-card:hover {
-  border-left-color: #7c6af7;
+  border-left-color: #ffffff;
+  background: rgba(255, 255, 255, 0.02);
 }
 
-/* ── Answer text ────────────────────────────────── */
+/* ── Monochrome Typography ───────────────────────── */
 .answer-text {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.8;
-  color: #d4d4e8;
+  color: #d4d4d4;
   white-space: pre-wrap;
 }
 .answer-text .flagged {
-  border-bottom: 1px solid #52525b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* ── Fade-in animations ─────────────────────────── */
+/* ── Modern Fade Animations ─────────────────────── */
+.animate-fade-up {
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.animate-fade-up {
-  animation: fadeUp 0.45s ease forwards;
-}
 
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-.animate-fade-in {
-  animation: fadeIn 0.35s ease forwards;
+
+/* ── Glassmorphism Utility ──────────────────────── */
+.glass-panel {
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* ── Subtle input glow on focus ─────────────────── */
+/* ── Subtle Inputs ──────────────────────────────── */
 .search-input:focus {
   outline: none;
-  border-color: #3a3a4e !important;
-  box-shadow: 0 0 0 3px rgba(124,106,247,0.1);
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.03);
 }

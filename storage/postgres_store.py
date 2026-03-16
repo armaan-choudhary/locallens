@@ -3,17 +3,19 @@ import psycopg2
 from psycopg2.pool import SimpleConnectionPool
 from psycopg2.extras import RealDictCursor
 from config import POSTGRES_DSN
+import json
 
 _pool = None
 
 def get_pool():
+    """Get or initialize the Postgres connection pool."""
     global _pool
     if _pool is None:
         _pool = SimpleConnectionPool(1, 20, POSTGRES_DSN)
     return _pool
 
 def init_postgres():
-    """Run schema.sql if tables don't exist"""
+    """Initialize Postgres schema and perform necessary migrations."""
     schema_path = os.path.join(os.path.dirname(__file__), "schema.sql")
     with open(schema_path, "r") as f:
         schema_sql = f.read()
@@ -23,11 +25,27 @@ def init_postgres():
     try:
         with conn.cursor() as cur:
             cur.execute(schema_sql)
+            
+            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='image_regions' AND column_name='image_path'")
+            if not cur.fetchone():
+                cur.execute("ALTER TABLE image_regions ADD COLUMN image_path TEXT")
+            
+            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='support_scores'")
+            if not cur.fetchone():
+                cur.execute("ALTER TABLE chat_messages ADD COLUMN support_scores JSONB")
+                cur.execute("ALTER TABLE chat_messages ADD COLUMN flagged_sentences JSONB")
+                cur.execute("ALTER TABLE chat_messages ADD COLUMN verified BOOLEAN DEFAULT TRUE")
+            
+            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='scoped_docs'")
+            if not cur.fetchone():
+                cur.execute("ALTER TABLE chat_messages ADD COLUMN scoped_docs JSONB")
+                
         conn.commit()
     finally:
         pool.putconn(conn)
 
 def insert_document(doc_id: str, filename: str, filepath: str, page_count: int):
+    """Insert document metadata."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -40,37 +58,48 @@ def insert_document(doc_id: str, filename: str, filepath: str, page_count: int):
     finally:
         pool.putconn(conn)
 
-def insert_text_chunk(chunk_id: str, doc_id: str, page: int, index: int, char_start: int, char_end: int, text: str, source: str, milvus_id: int):
+def bulk_insert_text_chunks(chunks_data: list[tuple]):
+    """Insert text chunks in bulk."""
+    if not chunks_data:
+        return
     pool = get_pool()
     conn = pool.getconn()
     try:
         with conn.cursor() as cur:
-            cur.execute(
+            from psycopg2.extras import execute_values
+            execute_values(
+                cur,
                 """INSERT INTO text_chunks 
                    (chunk_id, doc_id, page_number, chunk_index, char_start, char_end, text, source, milvus_id) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING""",
-                (chunk_id, doc_id, page, index, char_start, char_end, text, source, milvus_id)
+                   VALUES %s ON CONFLICT DO NOTHING""",
+                chunks_data
             )
         conn.commit()
     finally:
         pool.putconn(conn)
 
-def insert_image_region(image_id: str, doc_id: str, page: int, index: int, bbox: list, milvus_id: int, nearby_chunk_id: str):
+def bulk_insert_image_regions(regions_data: list[tuple]):
+    """Insert image regions in bulk."""
+    if not regions_data:
+        return
     pool = get_pool()
     conn = pool.getconn()
     try:
         with conn.cursor() as cur:
-            cur.execute(
+            from psycopg2.extras import execute_values
+            execute_values(
+                cur,
                 """INSERT INTO image_regions 
-                   (image_id, doc_id, page_number, image_index, bbox_x1, bbox_y1, bbox_x2, bbox_y2, milvus_id, nearby_chunk_id) 
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING""",
-                (image_id, doc_id, page, index, bbox[0], bbox[1], bbox[2], bbox[3], milvus_id, nearby_chunk_id)
+                   (image_id, doc_id, page_number, image_index, bbox_x1, bbox_y1, bbox_x2, bbox_y2, milvus_id, nearby_chunk_id, image_path) 
+                   VALUES %s ON CONFLICT DO NOTHING""",
+                regions_data
             )
         conn.commit()
     finally:
         pool.putconn(conn)
 
 def get_chunk_by_milvus_id(milvus_id: int) -> dict:
+    """Retrieve text chunk metadata by Milvus ID."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -86,6 +115,7 @@ def get_chunk_by_milvus_id(milvus_id: int) -> dict:
         pool.putconn(conn)
 
 def get_image_by_milvus_id(milvus_id: int) -> dict:
+    """Retrieve image region metadata by Milvus ID."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -101,6 +131,7 @@ def get_image_by_milvus_id(milvus_id: int) -> dict:
         pool.putconn(conn)
 
 def get_chunks_by_doc_and_page(doc_id: str, page: int) -> list:
+    """Retrieve all text chunks for a specific document and page."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -115,6 +146,7 @@ def get_chunks_by_doc_and_page(doc_id: str, page: int) -> list:
         pool.putconn(conn)
         
 def get_all_documents() -> list:
+    """Retrieve metadata for all ingested documents."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -131,6 +163,7 @@ def get_all_documents() -> list:
         pool.putconn(conn)
 
 def get_all_chunks() -> list:
+    """Retrieve all text chunks from all documents."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -143,14 +176,12 @@ def get_all_chunks() -> list:
     finally:
         pool.putconn(conn)
 
-
 def delete_document_data(doc_id: str):
+    """Delete all database records associated with a document ID."""
     pool = get_pool()
     conn = pool.getconn()
     try:
         with conn.cursor() as cur:
-            # Foreign keys should handle cascading if schema is set up with ON DELETE CASCADE,
-            # otherwise we do it manually.
             cur.execute("DELETE FROM text_chunks WHERE doc_id = %s", (doc_id,))
             cur.execute("DELETE FROM image_regions WHERE doc_id = %s", (doc_id,))
             cur.execute("DELETE FROM documents WHERE doc_id = %s", (doc_id,))
@@ -158,9 +189,8 @@ def delete_document_data(doc_id: str):
     finally:
         pool.putconn(conn)
 
-# ── Chat Support ─────────────────────────────────────────────────────────────
-
 def create_session(session_id: str, title: str):
+    """Create a new chat session."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -174,6 +204,7 @@ def create_session(session_id: str, title: str):
         pool.putconn(conn)
 
 def get_all_sessions() -> list:
+    """Retrieve all chat sessions."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -184,6 +215,7 @@ def get_all_sessions() -> list:
         pool.putconn(conn)
 
 def delete_session(session_id: str):
+    """Delete a chat session."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -193,18 +225,22 @@ def delete_session(session_id: str):
     finally:
         pool.putconn(conn)
 
-def add_message(message_id: str, session_id: str, role: str, content: str, citations: list = None):
-    import json
+def add_message(message_id: str, session_id: str, role: str, content: str, citations: list = None, support_scores: list = None, flagged_sentences: list = None, verified: bool = True, scoped_docs: list = None):
+    """Add a message to a chat session."""
     pool = get_pool()
     conn = pool.getconn()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                """INSERT INTO chat_messages (message_id, session_id, role, content, citations)
-                   VALUES (%s, %s, %s, %s, %s)""",
-                (message_id, session_id, role, content, json.dumps(citations) if citations else None)
+                """INSERT INTO chat_messages (message_id, session_id, role, content, citations, support_scores, flagged_sentences, verified, scoped_docs)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                (message_id, session_id, role, content, 
+                 json.dumps(citations) if citations else None,
+                 json.dumps(support_scores) if support_scores else None,
+                 json.dumps(flagged_sentences) if flagged_sentences else None,
+                 verified,
+                 json.dumps(scoped_docs) if scoped_docs else None)
             )
-            # Update session timestamp
             cur.execute(
                 "UPDATE chat_sessions SET updated_at = NOW() WHERE session_id = %s",
                 (session_id,)
@@ -214,7 +250,7 @@ def add_message(message_id: str, session_id: str, role: str, content: str, citat
         pool.putconn(conn)
 
 def get_messages_for_session(session_id: str) -> list:
-    import json
+    """Retrieve all messages for a specific chat session."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -227,13 +263,18 @@ def get_messages_for_session(session_id: str) -> list:
             for r in rows:
                 if r["citations"]:
                     r["citations"] = json.loads(r["citations"]) if isinstance(r["citations"], str) else r["citations"]
+                if r["support_scores"]:
+                    r["support_scores"] = json.loads(r["support_scores"]) if isinstance(r["support_scores"], str) else r["support_scores"]
+                if r["flagged_sentences"]:
+                    r["flagged_sentences"] = json.loads(r["flagged_sentences"]) if isinstance(r["flagged_sentences"], str) else r["flagged_sentences"]
+                if r["scoped_docs"]:
+                    r["scoped_docs"] = json.loads(r["scoped_docs"]) if isinstance(r["scoped_docs"], str) else r["scoped_docs"]
             return rows
     finally:
         pool.putconn(conn)
 
-# ── Session Document Management ───────────────────────────────────────────────
-
 def add_doc_to_session(session_id: str, doc_id: str):
+    """Associate a document with a chat session."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -248,6 +289,7 @@ def add_doc_to_session(session_id: str, doc_id: str):
         pool.putconn(conn)
 
 def remove_doc_from_session(session_id: str, doc_id: str):
+    """Disassociate a document from a chat session."""
     pool = get_pool()
     conn = pool.getconn()
     try:
@@ -261,7 +303,7 @@ def remove_doc_from_session(session_id: str, doc_id: str):
         pool.putconn(conn)
 
 def get_docs_for_session(session_id: str) -> list[str]:
-    """Returns a list of doc_ids associated with a session."""
+    """Retrieve all document IDs associated with a chat session."""
     pool = get_pool()
     conn = pool.getconn()
     try:

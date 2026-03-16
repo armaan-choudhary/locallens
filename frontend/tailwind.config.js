@@ -7,36 +7,36 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Page layers
-        base:     '#08080a',
-        surface:  '#0f0f13',
-        raised:   '#161620',
-        card:     '#1a1a24',
+        // High-End Monochrome Scale
+        base:     '#000000',
+        surface:  '#0a0a0a',
+        raised:   '#121212',
+        card:     '#181818',
 
-        // Borders
-        border:   '#22222e',
-        borderHi: '#32323e',
+        // Monochrome Borders
+        border:   'rgba(255, 255, 255, 0.08)',
+        borderHi: 'rgba(255, 255, 255, 0.15)',
 
-        // Muted text scale
-        muted3:  '#2e2e3c',
-        muted4:  '#3a3a4e',
-        muted5:  '#50505e',
-        muted6:  '#606070',
-        muted7:  '#78788a',
-        muted9:  '#9898aa',
-        muted11: '#c0c0d0',
-        muted14: '#e0e0ee',
-        white:   '#f4f4fc',
+        // Pure Grayscale Text Scale
+        muted3:  '#262626',
+        muted4:  '#404040',
+        muted5:  '#525252',
+        muted6:  '#737373',
+        muted7:  '#a3a3a3',
+        muted9:  '#d4d4d4',
+        muted11: '#e5e5e5',
+        muted14: '#fafafa',
+        white:   '#ffffff',
 
-        // Accent
-        accent:     '#7c6af7',
-        accentLight:'#a78bfa',
-        accentDim:  'rgba(124,106,247,0.14)',
+        // Grayscale "Accent" (White/Silver focus)
+        accent:     '#ffffff',
+        accentLight:'#e5e5e5',
+        accentDim:  'rgba(255, 255, 255, 0.1)',
 
-        // Status
-        success: '#34d399',
-        warning: '#fbbf24',
-        error:   '#f87171',
+        // Minimal Status (keeping semantic meaning but desaturated)
+        success: '#e5e5e5', // Done is now bold white
+        warning: '#a3a3a3', // Warning is silver
+        error:   '#ffffff', // Error is white on dark
       },
       fontFamily: {
         inter: ['Inter', 'system-ui', 'sans-serif'],
@@ -48,13 +48,31 @@ export default {
         '8':  '8px',
         '10': '10px',
         '12': '12px',
+        '16': '16px',
+        '24': '24px',
       },
       borderWidth: {
         '1.5': '1.5px',
       },
-      animation: {
-        'pulse-slow': 'pulse 2.5s cubic-bezier(0.4,0,0.6,1) infinite',
+      boxShadow: {
+        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.8)',
+        'glow': '0 0 20px rgba(255, 255, 255, 0.15)',
       },
+      animation: {
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'fade-in': 'fadeIn 0.5s ease-out forwards',
+        'fade-up': 'fadeUp 0.6s ease-out forwards',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeUp: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        }
+      }
     },
   },
   plugins: [],

@@ -9,24 +9,22 @@ interface CitationModalProps {
   citations: CitationType[];
 }
 
+/** Modal component for displaying source citations and references */
 const CitationModal: React.FC<CitationModalProps> = ({ isOpen, onClose, citations }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in" 
         onClick={onClose}
       />
       
-      {/* Modal Content */}
       <div className="relative w-full max-w-[700px] h-[80vh] bg-surface border border-border rounded-20 shadow-2xl flex flex-col overflow-hidden animate-zoom-in">
-        {/* Header */}
         <div className="px-6 py-5 border-b border-border flex items-center justify-between bg-surface/50 backdrop-blur-xl sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-8 bg-accentDim flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-accent" />
+            <div className="w-8 h-8 rounded-8 bg-white/10 flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-white" />
             </div>
             <div>
               <h3 className="text-white text-[15px] font-medium">Source Citations</h3>
@@ -41,7 +39,6 @@ const CitationModal: React.FC<CitationModalProps> = ({ isOpen, onClose, citation
           </button>
         </div>
 
-        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-4 bg-background/30">
           {citations.map((c, i) => (
             <div key={i} className="group relative">
@@ -59,7 +56,6 @@ const CitationModal: React.FC<CitationModalProps> = ({ isOpen, onClose, citation
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-border bg-surface/50 flex justify-end">
           <button 
             onClick={onClose}

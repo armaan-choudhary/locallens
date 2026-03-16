@@ -1,52 +1,71 @@
+import asyncio
 from embeddings.text_embedder import embed_texts
 from embeddings.image_embedder import embed_text_for_image
 from storage.milvus_store import search_text, search_image
 from storage.postgres_store import get_chunk_by_milvus_id, get_image_by_milvus_id
 from config import TOP_K_RETRIEVAL
 
-def run_dense_retrieval(query: str, doc_ids: list = None):
+async def run_dense_retrieval_async(query: str, doc_ids: list = None):
     """
-    Search Milvus for text and image embeddings.
-    If doc_ids is provided, only those documents are searched.
-    Returns: (text_results, image_results)
+    Perform asynchronous dense retrieval for both text and image modalities.
     """
     if not query.strip():
         return [], []
         
-    text_emb = embed_texts([query])
-    image_emb = embed_text_for_image(query)
+    loop = asyncio.get_event_loop()
     
-    milvus_text_res = search_text(text_emb, TOP_K_RETRIEVAL, doc_ids=doc_ids)
-    milvus_image_res = search_image(image_emb, TOP_K_RETRIEVAL, doc_ids=doc_ids)
+    # Generate embeddings
+    text_emb = await loop.run_in_executor(None, embed_texts, [query])
+    image_emb = await loop.run_in_executor(None, embed_text_for_image, query)
     
-    text_results = []
-    for hit in milvus_text_res:
+    # Concurrent vector searches
+    text_task = loop.run_in_executor(None, search_text, text_emb, TOP_K_RETRIEVAL, doc_ids)
+    image_task = loop.run_in_executor(None, search_image, image_emb, TOP_K_RETRIEVAL, doc_ids)
+    
+    milvus_text_res, milvus_image_res = await asyncio.gather(text_task, image_task)
+    
+    async def get_text_meta(hit):
         m_id = hit["milvus_id"]
-        pg_meta = get_chunk_by_milvus_id(m_id)
+        pg_meta = await loop.run_in_executor(None, get_chunk_by_milvus_id, m_id)
         if pg_meta:
-            text_results.append({
+            return {
                 "chunk_id": pg_meta["chunk_id"],
                 "text": pg_meta["text"],
                 "page": pg_meta["page_number"],
                 "doc_id": pg_meta["doc_id"],
                 "filename": pg_meta["filename"],
                 "score": hit["score"]
-            })
-            
-    image_results = []
-    for hit in milvus_image_res:
+            }
+        return None
+
+    async def get_image_meta(hit):
         m_id = hit["milvus_id"]
-        pg_meta = get_image_by_milvus_id(m_id)
+        pg_meta = await loop.run_in_executor(None, get_image_by_milvus_id, m_id)
         if pg_meta:
             bbox = [pg_meta["bbox_x1"], pg_meta["bbox_y1"], pg_meta["bbox_x2"], pg_meta["bbox_y2"]]
-            image_results.append({
+            return {
                 "image_id": pg_meta["image_id"],
                 "page": pg_meta["page_number"],
                 "doc_id": pg_meta["doc_id"],
                 "filename": pg_meta["filename"],
                 "bbox": bbox,
                 "nearby_chunk_id": pg_meta["nearby_chunk_id"],
+                "image_path": pg_meta.get("image_path"),
                 "score": hit["score"]
-            })
+            }
+        return None
+
+    text_meta_tasks = [get_text_meta(hit) for hit in milvus_text_res]
+    image_meta_tasks = [get_image_meta(hit) for hit in milvus_image_res]
+    
+    text_results_raw = await asyncio.gather(*text_meta_tasks)
+    image_results_raw = await asyncio.gather(*image_meta_tasks)
+    
+    text_results = [r for r in text_results_raw if r]
+    image_results = [r for r in image_results_raw if r]
             
     return text_results, image_results
+
+def run_dense_retrieval(query: str, doc_ids: list = None):
+    """Synchronous wrapper for dense retrieval."""
+    return asyncio.run(run_dense_retrieval_async(query, doc_ids))

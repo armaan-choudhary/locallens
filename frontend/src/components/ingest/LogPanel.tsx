@@ -1,3 +1,6 @@
+/**
+ * Terminal-style log viewer for ingestion pipeline updates.
+ */
 import React, { useEffect, useRef } from 'react';
 import { Terminal } from 'lucide-react';
 
@@ -10,6 +13,9 @@ interface ParsedLine {
   text: string;
 }
 
+/**
+ * Categorizes log lines for semantic styling.
+ */
 const parseLine = (log: string): ParsedLine => {
   if (/✓|done|complete|stored|success/i.test(log)) return { type: 'ok',   text: log };
   if (/✗|fail|error/i.test(log))                    return { type: 'err',  text: log };

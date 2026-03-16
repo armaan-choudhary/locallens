@@ -3,10 +3,9 @@ from pymilvus import connections, FieldSchema, CollectionSchema, DataType, Colle
 from config import MILVUS_HOST, MILVUS_PORT, MILVUS_COLLECTION_TEXT, MILVUS_COLLECTION_IMAGE
 
 def init_milvus():
-    print(f"Connecting to Milvus at {MILVUS_HOST}:{MILVUS_PORT}")
+    """Initialize Milvus connections and collections."""
     connections.connect("default", host=MILVUS_HOST, port=MILVUS_PORT)
     
-    # Text collection
     if not utility.has_collection(MILVUS_COLLECTION_TEXT):
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
@@ -16,7 +15,6 @@ def init_milvus():
         schema = CollectionSchema(fields, description="Text Embeddings")
         collection = Collection(MILVUS_COLLECTION_TEXT, schema)
         
-        # Create HNSW index
         index_params = {
             "metric_type": "L2",
             "index_type": "HNSW",
@@ -24,7 +22,6 @@ def init_milvus():
         }
         collection.create_index(field_name="embedding", index_params=index_params)
     
-    # Image collection
     if not utility.has_collection(MILVUS_COLLECTION_IMAGE):
         fields = [
             FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
@@ -35,51 +32,42 @@ def init_milvus():
         collection = Collection(MILVUS_COLLECTION_IMAGE, schema)
         
         index_params = {
-            "metric_type": "L2", # CLIP usually trained with cosine, but normalized L2 == cosine
+            "metric_type": "L2",
             "index_type": "HNSW",
             "params": {"M": 16, "efConstruction": 200}
         }
         collection.create_index(field_name="embedding", index_params=index_params)
     
-    # Load into memory
     Collection(MILVUS_COLLECTION_TEXT).load()
     Collection(MILVUS_COLLECTION_IMAGE).load()
 
 def insert_text_vectors(embeddings: np.ndarray, doc_ids: list) -> list[int]:
+    """Insert text embeddings into Milvus."""
     if embeddings.shape[0] == 0:
         return []
         
     collection = Collection(MILVUS_COLLECTION_TEXT)
-    data = [
-        doc_ids,
-        embeddings.tolist()
-    ]
+    data = [doc_ids, embeddings.tolist()]
     res = collection.insert(data)
     collection.flush()
     return res.primary_keys
 
 def insert_image_vectors(embeddings: np.ndarray, doc_ids: list) -> list[int]:
+    """Insert image embeddings into Milvus."""
     if embeddings.shape[0] == 0:
         return []
         
     collection = Collection(MILVUS_COLLECTION_IMAGE)
-    data = [
-        doc_ids,
-        embeddings.tolist()
-    ]
+    data = [doc_ids, embeddings.tolist()]
     res = collection.insert(data)
     collection.flush()
     return res.primary_keys
 
 def search_text(query_embedding: np.ndarray, top_k: int, doc_ids: list = None) -> list[dict]:
-    # Query embedding should be [1, dim]
+    """Search for similar text embeddings."""
     collection = Collection(MILVUS_COLLECTION_TEXT)
-    
     search_params = {"metric_type": "L2", "params": {"ef": min(max(top_k * 2, 64), 200)}}
-    expr = None
-    if doc_ids:
-        ids_str = ", ".join(f"'{d}'" for d in doc_ids)
-        expr = f"doc_id in [{ids_str}]"
+    expr = f"doc_id in [{', '.join(f'\'{d}\'' for d in doc_ids)}]" if doc_ids else None
 
     results = collection.search(
         data=query_embedding.tolist(),
@@ -90,24 +78,17 @@ def search_text(query_embedding: np.ndarray, top_k: int, doc_ids: list = None) -
         output_fields=["doc_id"]
     )
     
-    # results is a list of lists of Hits
     output = []
     if results and len(results) > 0:
         for hit in results[0]:
-            output.append({
-                "milvus_id": hit.id,
-                "score": hit.distance
-            })
+            output.append({"milvus_id": hit.id, "score": hit.distance})
     return output
 
 def search_image(query_embedding: np.ndarray, top_k: int, doc_ids: list = None) -> list[dict]:
+    """Search for similar image embeddings."""
     collection = Collection(MILVUS_COLLECTION_IMAGE)
-    
     search_params = {"metric_type": "L2", "params": {"ef": min(max(top_k * 2, 64), 200)}}
-    expr = None
-    if doc_ids:
-        ids_str = ", ".join(f"'{d}'" for d in doc_ids)
-        expr = f"doc_id in [{ids_str}]"
+    expr = f"doc_id in [{', '.join(f'\'{d}\'' for d in doc_ids)}]" if doc_ids else None
 
     results = collection.search(
         data=query_embedding.tolist(),
@@ -121,16 +102,15 @@ def search_image(query_embedding: np.ndarray, top_k: int, doc_ids: list = None) 
     output = []
     if results and len(results) > 0:
         for hit in results[0]:
-            output.append({
-                "milvus_id": hit.id,
-                "score": hit.distance
-            })
+            output.append({"milvus_id": hit.id, "score": hit.distance})
     return output
 
 def delete_by_doc_id(doc_id: str):
-    """For re-ingestion, delete existing vectors dynamically."""
+    """Delete all vectors associated with a document ID."""
     text_coll = Collection(MILVUS_COLLECTION_TEXT)
     text_coll.delete(expr=f"doc_id == '{doc_id}'")
+    text_coll.flush()
     
     image_coll = Collection(MILVUS_COLLECTION_IMAGE)
     image_coll.delete(expr=f"doc_id == '{doc_id}'")
+    image_coll.flush()

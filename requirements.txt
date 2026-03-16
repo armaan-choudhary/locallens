@@ -16,3 +16,7 @@ gradio
 numpy
 tqdm
 opencv-python-headless
+fastapi
+uvicorn
+python-multipart
+pydantic

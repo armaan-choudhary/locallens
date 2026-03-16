@@ -1,7 +1,6 @@
 def map_citations(final_answer: str, ranked_chunks: list[dict]) -> list[dict]:
     """
-    Builds citation cards for each context chunk used to generate the answer.
-    Cards order preserves RRF rank order.
+    Map context chunks to citation cards for the generated answer.
     """
     if not ranked_chunks:
         return []
@@ -22,14 +21,12 @@ def map_citations(final_answer: str, ranked_chunks: list[dict]) -> list[dict]:
             card["char_start"] = chunk.get("char_start", 0)
             card["char_end"] = chunk.get("char_end", 0)
             card["bbox"] = None
-        else: # image
+        else:
             card["chunk_text"] = "Image Region Extracted"
             card["char_start"] = 0
             card["char_end"] = 0
-            if "bbox" in chunk:
-                card["bbox"] = chunk["bbox"]
-            else:
-                card["bbox"] = [0, 0, 0, 0]
+            card["image_id"] = chunk.get("image_id")
+            card["bbox"] = chunk.get("bbox", [0, 0, 0, 0])
                 
         citation_cards.append(card)
         

@@ -58,7 +58,7 @@ const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
       </div>
 
       {/* Chunk text block */}
-      {chunkText ? (
+      {chunkText && !isImage && (
         <div className={`
           font-mono text-[11px] leading-[1.75] text-muted7
           bg-surface border border-border rounded-6 px-3 py-[10px] mb-2
@@ -66,9 +66,22 @@ const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
         `}>
           {chunkText}
         </div>
-      ) : (
+      )}
+
+      {isImage && citation.image_id && (
+        <div className="mb-3 rounded-8 overflow-hidden border border-border bg-black/20 group-hover:border-accent/30 transition-colors">
+          <img 
+            src={`/api/images/${citation.image_id}`} 
+            alt="Extracted Region" 
+            className="w-full h-auto object-contain max-h-[300px] hover:scale-[1.02] transition-transform duration-500"
+            loading="lazy"
+          />
+        </div>
+      )}
+
+      {!chunkText && !isImage && (
         <div className="font-mono text-[11px] text-muted4 italic mb-2 px-1">
-          Image reference — no text chunk available.
+          No text chunk available.
         </div>
       )}
 

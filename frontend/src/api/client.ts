@@ -1,9 +1,18 @@
+/**
+ * LocalLens Core API Client
+ * Orchestrates communication between the frontend and the local RAG engine.
+ */
+
 import axios from 'axios';
 import type { Document, QueryResult, IngestionStatus, ChatSession, ChatMessage } from '../types';
 
 const api = axios.create({
   baseURL: '/api',
 });
+
+/**
+ * Retrieval & Ingestion
+ */
 
 export const getDocuments = async (): Promise<Document[]> => {
   try {
@@ -39,6 +48,10 @@ export const getIngestionStatus = async (jobId: string): Promise<IngestionStatus
   }
 };
 
+/**
+ * Search & Query
+ */
+
 export const queryDocs = async (query: string, session_id?: string): Promise<QueryResult | null> => {
   try {
     const response = await api.post<QueryResult>('/query', { query, session_id });
@@ -48,6 +61,65 @@ export const queryDocs = async (query: string, session_id?: string): Promise<Que
     return null;
   }
 };
+
+export const queryDocsStream = async (
+  query: string, 
+  session_id: string | undefined, 
+  onUpdate: (data: Partial<QueryResult> & { done: boolean }) => void
+): Promise<void> => {
+  try {
+    const response = await fetch('/api/query/stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, session_id }),
+    });
+
+    if (!response.body) return;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            onUpdate(data);
+          } catch (e) {
+            // No-op for malformed stream chunks
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error in streaming query:', error);
+  }
+};
+
+export const searchByImage = async (file: File, sessionId?: string): Promise<QueryResult | null> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (sessionId) formData.append('session_id', sessionId);
+    
+    const response = await api.post<QueryResult>('/search/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error in image search:', error);
+    return null;
+  }
+};
+
+/**
+ * Session Management
+ */
 
 export const getSessions = async (): Promise<ChatSession[]> => {
   try {
@@ -91,6 +163,10 @@ export const getSessionMessages = async (sessionId: string): Promise<ChatMessage
   }
 };
 
+/**
+ * Document Context Control
+ */
+
 export const deleteDocument = async (docId: string): Promise<boolean> => {
   try {
     await api.delete(`/documents/${docId}`);
@@ -98,6 +174,16 @@ export const deleteDocument = async (docId: string): Promise<boolean> => {
   } catch (error) {
     console.error('Error deleting document:', error);
     return false;
+  }
+};
+
+export const getDocumentDetails = async (docId: string): Promise<any> => {
+  try {
+    const response = await api.get(`/documents/${docId}/details`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching document details:', error);
+    return null;
   }
 };
 
@@ -121,12 +207,42 @@ export const addDocToSession = async (sessionId: string, docId: string): Promise
   }
 };
 
+export const addDocsToSessionBulk = async (sessionId: string, docIds: string[]): Promise<boolean> => {
+  try {
+    await api.post(`/sessions/${sessionId}/documents/bulk/add`, docIds);
+    return true;
+  } catch (error) {
+    console.error('Error adding docs bulk:', error);
+    return false;
+  }
+};
+
 export const removeDocFromSession = async (sessionId: string, docId: string): Promise<boolean> => {
   try {
     await api.delete(`/sessions/${sessionId}/documents/${docId}`);
     return true;
   } catch (error) {
     console.error('Error removing doc from session:', error);
+    return false;
+  }
+};
+
+export const removeDocsFromSessionBulk = async (sessionId: string, docIds: string[]): Promise<boolean> => {
+  try {
+    await api.post(`/sessions/${sessionId}/documents/bulk/remove`, docIds);
+    return true;
+  } catch (error) {
+    console.error('Error removing docs bulk:', error);
+    return false;
+  }
+};
+
+export const clearSessionDocs = async (sessionId: string): Promise<boolean> => {
+  try {
+    await api.delete(`/sessions/${sessionId}/documents/bulk/clear`);
+    return true;
+  } catch (error) {
+    console.error('Error clearing session docs:', error);
     return false;
   }
 };

@@ -13,14 +13,21 @@ export interface CitationCard {
   char_start: number
   char_end: number
   source_type: 'text' | 'image'
+  image_id?: string
   bbox: [number, number, number, number] | null
   verified: boolean
+}
+
+export interface SupportScore {
+  sentence: string
+  score: number
 }
 
 export interface QueryResult {
   answer: string
   verified: boolean
   flagged_sentences: string[]
+  support_scores?: SupportScore[]
   citations: CitationCard[]
   latency_seconds: number
 }
@@ -46,5 +53,9 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   citations?: CitationCard[]
+  support_scores?: SupportScore[]
+  flagged_sentences?: string[]
+  verified?: boolean
+  scoped_docs?: string[]
   created_at: string
 }

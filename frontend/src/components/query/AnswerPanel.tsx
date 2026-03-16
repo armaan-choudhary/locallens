@@ -1,17 +1,15 @@
-import React, { useState } from 'react';
-import { Copy, Check, AlertTriangle, ShieldCheck } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Copy, Check, AlertTriangle, ShieldCheck, Info } from 'lucide-react';
 import HallucinationWarning from './HallucinationWarning';
+import type { SupportScore } from '../../types';
 
-/** Client-side safety net — strips residual LLM artefacts */
+/** Sanitizes answer text by removing LLM-specific artifacts and thinking blocks */
 function sanitiseAnswer(text: string): string {
   return text
-    // Remove raw source-label echoes: "— source: foo.pdf, page 7"
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .replace(/—\s*source:\s*\S+,\s*page\s*\d+/gi, '')
-    // Remove image placeholder echoes
     .replace(/\[Image found on page \d+ of .+?—.+?\]/gi, '')
-    // Remove template leftovers
     .replace(/\[Insert answer here\]['""]?/gi, '')
-    // Collapse double spaces / artefact spacing
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
@@ -22,16 +20,21 @@ interface AnswerPanelProps {
   verified: boolean;
   latency: number;
   flaggedSentences: string[];
+  supportScores?: SupportScore[];
+  isStreaming?: boolean;
 }
 
+/** Displays the generated answer with verification status and confidence levels */
 const AnswerPanel: React.FC<AnswerPanelProps> = ({
   answer,
   verified,
   latency,
   flaggedSentences,
+  supportScores = [],
+  isStreaming = false
 }) => {
   const [copied, setCopied] = useState(false);
-  const cleanAnswer = sanitiseAnswer(answer);
+  const cleanAnswer = useMemo(() => sanitiseAnswer(answer), [answer]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(cleanAnswer);
@@ -39,21 +42,57 @@ const AnswerPanel: React.FC<AnswerPanelProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const confidence = useMemo(() => {
+    if (supportScores.length === 0) return null;
+    const avg = supportScores.reduce((a, b) => a + b.score, 0) / supportScores.length;
+    return Math.round(avg * 100);
+  }, [supportScores]);
+
   const renderAnswer = () => {
-    if (flaggedSentences.length === 0) {
+    if (!cleanAnswer) return null;
+    
+    if (flaggedSentences.length === 0 && supportScores.length === 0) {
       return <span>{cleanAnswer}</span>;
     }
 
-    const parts = cleanAnswer.split(/([.!?]\s+)/);
+    const sentences = cleanAnswer.split(/(?<=[.!?])\s+/);
+    
     return (
       <>
-        {parts.map((part, i) => {
-          const isFlagged = flaggedSentences.some(
-            s => typeof s === 'string' && s.toLowerCase().includes(part.trim().toLowerCase()) && part.trim().length > 10
+        {sentences.map((sentence, i) => {
+          const trimmed = sentence.trim();
+          if (!trimmed) return null;
+
+          const scoreObj = supportScores.find(s => 
+            trimmed.toLowerCase().includes(s.sentence.toLowerCase()) || 
+            s.sentence.toLowerCase().includes(trimmed.toLowerCase())
           );
+          
+          const isFlagged = flaggedSentences.some(
+            s => trimmed.toLowerCase().includes(s.toLowerCase()) && trimmed.length > 10
+          );
+
+          let bgClass = "";
+          let title = "";
+
+          if (scoreObj) {
+            const s = scoreObj.score;
+            if (s > 0.7) bgClass = "hover:bg-white/5";
+            else if (s > 0.4) bgClass = "hover:bg-white/5";
+            else bgClass = "bg-white/5 hover:bg-white/10";
+            title = `Support Score: ${Math.round(s * 100)}%`;
+          } else if (isFlagged) {
+            bgClass = "bg-white/10";
+            title = "Potentially unverified statement";
+          }
+
           return (
-            <span key={i} className={isFlagged ? 'flagged' : ''}>
-              {part}
+            <span 
+              key={i} 
+              className={`transition-colors rounded-2 px-0.5 cursor-help ${bgClass}`}
+              title={title}
+            >
+              {sentence}{" "}
             </span>
           );
         })}
@@ -63,43 +102,66 @@ const AnswerPanel: React.FC<AnswerPanelProps> = ({
 
   return (
     <div className="flex flex-col animate-fade-up">
-      {/* Section label */}
-      <div className="flex items-center gap-2 mb-4">
-        <span className="font-mono text-[9px] text-muted4 uppercase tracking-[0.12em]">
-          Answer
-        </span>
-        {verified ? (
-          <span className="flex items-center gap-1 font-mono text-[9px] text-success">
-            <ShieldCheck className="w-[10px] h-[10px]" /> verified
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[9px] text-muted4 uppercase tracking-[0.12em]">
+            Answer
           </span>
-        ) : (
-          <span className="flex items-center gap-1 font-mono text-[9px] text-warning">
-            <AlertTriangle className="w-[10px] h-[10px]" /> unverified
-          </span>
+          {verified ? (
+            <span className="flex items-center gap-1 font-mono text-[9px] text-white">
+              <ShieldCheck className="w-[10px] h-[10px]" /> verified
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 font-mono text-[9px] text-muted11">
+              <AlertTriangle className="w-[10px] h-[10px]" /> unverified
+            </span>
+          )}
+        </div>
+
+        {confidence !== null && !isStreaming && (
+          <div className="flex items-center gap-2 px-2 py-0.5 rounded-4 bg-raised border border-border">
+            <span className="font-mono text-[9px] text-muted4 uppercase">Confidence</span>
+            <span className={`font-mono text-[10px] font-bold ${confidence > 70 ? 'text-white' : confidence > 40 ? 'text-muted11' : 'text-muted7'}`}>
+              {confidence}%
+            </span>
+          </div>
         )}
       </div>
 
-      {!verified && <HallucinationWarning />}
+      {!verified && !isStreaming && <HallucinationWarning />}
 
-      {/* Answer body */}
-      <div className="answer-text">{renderAnswer()}</div>
-
-      {/* Footer */}
-      <div className="mt-8 flex items-center justify-between border-t border-border pt-4">
-        <div className="font-mono text-[11px] text-muted4">
-          {latency.toFixed(1)}s &nbsp;·&nbsp; LOCALLENS-LOCAL-01
-        </div>
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 text-muted5 hover:text-muted11 transition-colors focus:outline-none"
-        >
-          {copied
-            ? <Check className="w-[13px] h-[13px] text-success" />
-            : <Copy className="w-[13px] h-[13px]" />
-          }
-          <span className="text-[12px]">{copied ? 'Copied' : 'Copy'}</span>
-        </button>
+      <div className="answer-text leading-[1.8] text-[15px]">
+        {renderAnswer()}
       </div>
+
+      {!isStreaming && (
+        <div className="mt-8 flex items-center justify-between border-t border-border pt-4">
+          <div className="flex items-center gap-4">
+            <div className="font-mono text-[11px] text-muted4">
+              {latency > 0 ? `${latency.toFixed(1)}s` : 'Real-time'} &nbsp;·&nbsp; LOCALLENS-LOCAL-01
+            </div>
+            {supportScores.length > 0 && (
+              <div className="group relative flex items-center gap-1 cursor-help">
+                <Info className="w-3 h-3 text-muted4" />
+                <span className="font-mono text-[9px] text-muted4 uppercase border-b border-muted4/30 border-dotted">Analysis Active</span>
+                <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-surface border border-border rounded-8 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 text-[10px] text-muted11 leading-normal">
+                  Sentences are cross-referenced with your documents. Hover over text to see support levels.
+                </div>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 text-muted5 hover:text-muted11 transition-colors focus:outline-none"
+          >
+            {copied
+              ? <Check className="w-[13px] h-[13px] text-white" />
+              : <Copy className="w-[13px] h-[13px]" />
+            }
+            <span className="text-[12px]">{copied ? 'Copied' : 'Copy'}</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

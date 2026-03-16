@@ -7,13 +7,14 @@ _all_chunks_cache = []
 _is_dirty = True
 
 def mark_dirty():
+    """Mark the index as needing a rebuild."""
     global _is_dirty
     _is_dirty = True
 
 def build_index_if_needed():
+    """Build or rebuild the BM25 index from all chunks in storage."""
     global _bm25_index, _all_chunks_cache, _is_dirty
     if _is_dirty:
-        print("Rebuilding BM25 Index...")
         _all_chunks_cache = get_all_chunks()
         
         tokenized_corpus = []
@@ -30,9 +31,7 @@ def build_index_if_needed():
 
 def search(query: str, top_k: int = TOP_K_RETRIEVAL, doc_ids: list = None) -> list[dict]:
     """
-    Returns text chunks matching the given BM25 keyword query.
-    If doc_ids is provided, only those documents are returned.
-    [{"chunk_id", "text", "page", "doc_id", "filename", "score"}, ...]
+    Search text chunks using BM25 keyword matching.
     """
     build_index_if_needed()
     if not _bm25_index or not _all_chunks_cache:
@@ -42,7 +41,6 @@ def search(query: str, top_k: int = TOP_K_RETRIEVAL, doc_ids: list = None) -> li
     query_tokens = query.lower().split()
     scores = _bm25_index.get_scores(query_tokens)
     
-    # rank by scores
     top_indices = scores.argsort()[::-1]
     
     text_results = []
@@ -52,7 +50,6 @@ def search(query: str, top_k: int = TOP_K_RETRIEVAL, doc_ids: list = None) -> li
         score = scores[idx]
         if score > 0:
             pg_meta = _all_chunks_cache[idx]
-            # Apply doc_id filter if specified
             if doc_id_set and pg_meta["doc_id"] not in doc_id_set:
                 continue
             text_results.append({

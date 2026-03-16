@@ -17,7 +17,7 @@ const IngestPage: React.FC = () => {
 
   useEffect(() => { fetchDocuments(); }, []);
 
-  // Poll status
+  /** Monitor ingestion status via polling */
   useEffect(() => {
     if (!jobId || !isIngesting) return;
     const id = window.setInterval(async () => {
@@ -41,6 +41,7 @@ const IngestPage: React.FC = () => {
     setDocsLoading(false);
   };
 
+  /** Append unique files to selection queue */
   const handleFilesSelected = (files: File[]) => {
     setQueuedFiles(prev => {
       const names = new Set(prev.map(f => f.name));
@@ -52,6 +53,7 @@ const IngestPage: React.FC = () => {
     setQueuedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  /** Trigger document processing pipeline */
   const startIngestion = async () => {
     if (queuedFiles.length === 0) return;
     setIsIngesting(true);
@@ -70,14 +72,12 @@ const IngestPage: React.FC = () => {
       <Sidebar documents={documents} loading={docsLoading} onRefresh={fetchDocuments} />
 
       <main className="flex-1 overflow-y-auto px-10 py-9 max-w-[860px]">
-        {/* Header */}
         <div className="mb-7">
           <h1 className="text-[22px] font-semibold text-white tracking-[-0.01em]">
             Ingest Documents
           </h1>
           <p className="text-[13px] text-muted7 mt-1 leading-relaxed">
-            Drop individual PDFs or an entire folder. PyPDF2 extracts text;
-            Tesseract handles image-only pages via OCR.
+            Extract text from PDFs and images via OCR for local indexing.
           </p>
         </div>
 
@@ -90,9 +90,9 @@ const IngestPage: React.FC = () => {
               <button
                 onClick={startIngestion}
                 className="
-                  w-full mt-5 h-[42px] rounded-10 bg-accent hover:bg-accentLight
-                  text-[13px] font-medium text-white
-                  shadow-[0_0_24px_rgba(124,106,247,0.2)]
+                  w-full mt-5 h-[42px] rounded-10 bg-white hover:bg-muted11
+                  text-[13px] font-medium text-black
+                  shadow-[0_0_24px_rgba(255,255,255,0.05)]
                   transition-all duration-150 focus:outline-none
                 "
               >
@@ -112,10 +112,9 @@ const IngestPage: React.FC = () => {
           </div>
         )}
 
-        {/* After-done summary reflow */}
         {!isIngesting && status?.stage === 'done' && (
-          <div className="mt-6 p-4 rounded-10 border border-[rgba(52,211,153,0.2)] bg-[rgba(52,211,153,0.05)] animate-fade-in">
-            <div className="text-[13px] font-medium text-success mb-1">
+          <div className="mt-6 p-4 rounded-10 border border-white/10 bg-white/5 animate-fade-in">
+            <div className="text-[13px] font-medium text-white mb-1">
               ✓ Ingestion complete
             </div>
             <div className="font-mono text-[11px] text-muted6">
