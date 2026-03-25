@@ -22,3 +22,14 @@ Thumbs.db
 tmp/
 models/
 *.log
+
+# Test Artifacts
+frontend/playwright-report/
+frontend/test-results/
+frontend/tests-results/
+
+# Storage & Temporary
+storage/images/*
+!storage/images/.gitkeep
+var/
+~/
