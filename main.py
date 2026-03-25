@@ -4,7 +4,7 @@ import uuid
 import shutil
 import json
 from typing import List
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
 from pydantic import BaseModel
@@ -169,7 +169,7 @@ async def get_image_file(image_id: str):
     return FileResponse(img_path)
 
 @app.post("/api/search/image")
-async def search_by_image(file: UploadFile = File(...), session_id: str = None):
+async def search_by_image(file: UploadFile = File(...), session_id: str = Form(None)):
     # Vector search for visual similarity within session context
     try:
         img = Image.open(file.file).convert("RGB")
@@ -179,6 +179,9 @@ async def search_by_image(file: UploadFile = File(...), session_id: str = None):
     
     session_doc_ids = None
     if session_id:
+        # Record user search action
+        add_message(str(uuid.uuid4()), session_id, "user", "[Image Search]", scoped_docs=get_docs_for_session(session_id))
+        
         scoped = get_docs_for_session(session_id)
         if scoped:
             session_doc_ids = scoped
@@ -219,7 +222,8 @@ async def search_by_image(file: UploadFile = File(...), session_id: str = None):
             "assistant", 
             "I found several visually similar regions in your documents. You can review them in the citations below.", 
             citations,
-            verified=True
+            verified=True,
+            scoped_docs=session_doc_ids
         )
 
     return {

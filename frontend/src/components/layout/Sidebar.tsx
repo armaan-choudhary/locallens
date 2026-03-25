@@ -72,7 +72,7 @@ const DocItem = memo(({ doc, isScoped, isGlobalMode, isDisabled, onToggle, onDel
 const Sidebar: React.FC<SidebarProps> = ({ 
   documents = [], loading = false, onRefreshDocs, 
   sessions = [], currentSessionId, onSelectSession = () => {}, onRefreshSessions = () => {},
-  sessionDocIds, onToggleDoc, onBulkChange
+  sessionDocIds = new Set(), onToggleDoc = async () => {}, onBulkChange = () => {}
 }) => {
   const navigate = useNavigate();
   const location = useLocation();

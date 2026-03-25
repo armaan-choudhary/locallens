@@ -1,49 +1,81 @@
 # LocalLens
 
-## What is LocalLens
-LocalLens is a fully offline, local RAG (Retrieval-Augmented Generation) system that lets users search through their own private PDFs and scanned documents — including images and diagrams — using plain natural language. It requires no cloud APIs, ensuring 100% data sovereignty and privacy.
+LocalLens is a high-performance, privacy-first Retrieval-Augmented Generation (RAG) system designed for local document intelligence. It enables users to interact with their private document collections (PDFs, scanned images, and diagrams) using natural language, all while maintaining 100% data sovereignty by running entirely offline.
+
+## Key Features
+
+- **Privacy-First Architecture**: Fully local execution using 4-bit quantized Llama-3 (8B) and local vector/relational databases.
+- **Multimodal Ingestion**: Automated pipeline for text extraction (PyPDF2), OCR for scanned documents (Tesseract), and visual region extraction (OpenCV).
+- **Hybrid Retrieval System**: Combines Dense vector retrieval (CLIP/MiniLM) with Sparse keyword search (BM25), unified via Reciprocal Rank Fusion (RRF) for superior accuracy.
+- **Premium User Experience**: Modern React-based interface featuring a glassmorphism design system for a sleek, responsive workspace.
+- **Traceable Citations**: High-fidelity citation mapping that links generated answers directly to specific document pages and visual snippets.
+- **Context Management**: Session-based chat history with dynamic document scoping for focused information retrieval.
 
 ## System Requirements
-- Python 3.11+
-- Tesseract installed system-wide (`sudo apt-get install tesseract-ocr`)
-- Milvus running locally via Docker
-- PostgreSQL running locally via Docker (or bare metal)
-- NVIDIA GPU with at least 8GB VRAM recommended
 
-## Installation
+- **Operating System**: Linux (developed and tested on Ubuntu)
+- **Runtime**: Python 3.11+ and Node.js 18+
+- **Database**: Docker installed (for Milvus and PostgreSQL)
+- **Hardware**: NVIDIA GPU with 8GB+ VRAM recommended for optimal inference speeds.
+- **System Dependencies**: Tesseract OCR (`sudo apt-get install tesseract-ocr`)
+
+## Installation & Setup
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/your-repo/locallens
+   cd locallens
+   ```
+
+2. **Backend Setup**:
+   ```bash
+   # Create and activate virtual environment
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+3. **Frontend Setup**:
+   ```bash
+   cd frontend
+   npm install
+   cd ..
+   ```
+
+4. **Initialize Models**:
+   Place the Llama-3 8B GGUF model in the `./models/` directory.
+
+## Running the Application
+
+The simplest way to start the entire stack is using the provided startup script:
 
 ```bash
-git clone https://github.com/yourteam/locallens
-cd locallens
-pip install -r requirements.txt
-
-# Start Milvus
-docker run -d --name milvus -p 19530:19530 milvusdb/milvus:latest
-
-# Start PostgreSQL
-docker run -d --name pglocal -e POSTGRES_USER=locallens   -e POSTGRES_PASSWORD=locallens -e POSTGRES_DB=locallens   -p 5432:5432 postgres:15
-
-# Download Llama-3 8B Q4 GGUF and place in ./models/
+chmod +x run.sh
+./run.sh
 ```
 
-## Running the App
-
-```bash
-python main.py
-```
-Then open `http://localhost:7860` in your web browser.
+This script orchestrates the following:
+- **Database Services**: Starts Milvus and PostgreSQL via Docker Compose.
+- **Backend API**: Launches the FastAPI server at `http://localhost:8000`.
+- **Frontend UI**: Starts the Vite development server at `http://localhost:5173`.
 
 ## Architecture Overview
-- **Ingestion Layer**: Extracts text via PyPDF2 and Tesseract OCR for scanned pages. Extracts images and diagrams using OpenCV edge detection.
-- **Embeddings Layer**: Generates text embeddings using `all-MiniLM-L6-v2` and image embeddings using `openai/clip-vit-base-patch32`.
-- **Storage Layer**: Vectors are stored in a local Milvus instance, while document metadata, text chunks, and image region coordinates are persisted in PostgreSQL.
-- **Retrieval Layer**: Employs Dense vector retrieval (for both text and cross-modal image search) and BM25 sparse keyword retrieval. Results are unified and ranked using Reciprocal Rank Fusion (RRF).
-- **Generation Layer**: Uses a 4-bit quantized Llama-3 (8B) model to generate responses based exclusively on top-K context. Includes a Hallucination Checker verifying generated sentences against the source context using cosine similarity.
-- **Citation Layer**: Accurately traces answer details back to the specific PDF, page, and chunk/image snippet.
-- **Frontend UI**: A Gradio web application for uploading and querying documents.
+
+- **Ingestion**: Pre-processes documents into semantic chunks and visual crops.
+- **Embeddings**: Utilizes `all-MiniLM-L6-v2` for text and `CLIP` for cross-modal image search.
+- **Storage**: Vector data is managed in **Milvus**, while metadata and chat history are persisted in **PostgreSQL**.
+- **Generation**: Implements a streaming RAG workflow with an integrated hallucination checker for response verification.
+
+## Development & Testing
+
+LocalLens uses **Playwright** for automated UI and UX verification.
+```bash
+cd frontend
+npm run test:ux
+```
 
 ## Team
-- Armaan (Lead Developer / AI Engineer)
-- Arjun Saxena / UX UI Developer)
-- Kanishk Dhiman (Data / Pipeline Engineer)
-- Kartik Nagar (QA / Evaluation Specialist)
+- **Armaan**: Lead Developer / AI Engineer
+- **Arjun Saxena**: UI/UX Developer
+- **Kanishk Dhiman**: Data Pipeline Engineer
+- **Kartik Nagar**: QA / Evaluation Specialist
