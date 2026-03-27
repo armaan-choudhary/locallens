@@ -51,5 +51,10 @@ echo.
 echo LocalLens is now running!
 echo Frontend: http://localhost:5173
 echo Backend:  http://localhost:8000
+
+:: Open browser
+start http://localhost:5173
+
+echo.
 echo Close this window to stop (Note: Background processes may still run).
 pause

@@ -64,6 +64,14 @@ FRONTEND_PID=$!
 echo -e "${BLUE}LocalLens is now running!${NC}"
 echo -e "Frontend: http://localhost:5173"
 echo -e "Backend:  http://localhost:8000"
+
+# Attempt to open browser
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    xdg-open http://localhost:5173 &> /dev/null &
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    open http://localhost:5173 &> /dev/null &
+fi
+
 echo -e "Press Ctrl+C to stop all services."
 
 # Keep script alive to catch trap
