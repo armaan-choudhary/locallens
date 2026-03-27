@@ -14,8 +14,8 @@ POSTGRES_DSN = os.getenv("POSTGRES_DSN", "postgresql://locallens:locallens@local
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Local model paths (choose one)
-# Performance: Gemma 3 1B Q4_K_M (~900MB)
-LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "gemma-3-1b-it-q4_k_m.gguf")
+# Performance: Gemma 3 1B Q4_0 (~1GB)
+LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "gemma-3-1b-it-q4_0.gguf")
 
 # Optional: Gemma 3 1B f16 (~2GB)
 # LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "gemma-3-1b-it-f16.gguf")
