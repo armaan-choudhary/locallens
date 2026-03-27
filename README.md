@@ -13,7 +13,7 @@ LocalLens is a high-performance, privacy-first Retrieval-Augmented Generation (R
 
 ## System Requirements
 
-- **Operating System**: Linux (developed and tested on Ubuntu)
+- **Operating System**: Linux (developed and tested on PopOS)
 - **Runtime**: Python 3.11+ and Node.js 18+
 - **Database**: Docker installed (for Milvus and PostgreSQL)
 - **Hardware**: NVIDIA GPU with 8GB+ VRAM recommended for optimal inference speeds.
