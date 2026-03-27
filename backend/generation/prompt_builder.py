@@ -27,13 +27,14 @@ def build_prompt(query: str, retrieved_chunks: list[dict], history: list[dict] =
         f"{context_str}"
     )
 
-    messages = [{"role": "system", "content": system_content}]
+    messages = []
 
     if history:
         for turn in history[-5:]:
             messages.append({"role": turn["role"], "content": turn["content"]})
 
-    messages.append({"role": "user", "content": query})
+    final_query = f"{system_content}\n\nUSER QUESTION:\n{query}"
+    messages.append({"role": "user", "content": final_query})
 
     return messages
 

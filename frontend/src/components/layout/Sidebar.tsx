@@ -43,7 +43,7 @@ const DocItem = memo(({ doc, isScoped, isGlobalMode, isDisabled, onToggle, onDel
         onClick={handleToggle}
         disabled={isDisabled || isToggling}
         className={`mt-[1px] shrink-0 transition-colors focus:outline-none 
-          ${isScoped && !isGlobalMode ? 'text-white' : 'text-muted4 hover:text-white'}`}
+          ${isScoped && !isGlobalMode ? 'text-white' : 'text-muted7 hover:text-white'}`}
       >
         {isToggling ? <Loader2 className="w-[13px] h-[13px] animate-spin" /> :
          isScoped && !isGlobalMode ? <CheckSquare className="w-[13px] h-[13px]" /> : <Square className="w-[13px] h-[13px]" />}
@@ -52,7 +52,7 @@ const DocItem = memo(({ doc, isScoped, isGlobalMode, isDisabled, onToggle, onDel
         <div className={`text-[12px] font-medium truncate pr-5 ${isScoped && !isGlobalMode ? 'text-white' : 'text-muted11'}`} title={doc.filename}>
           {doc.filename}
         </div>
-        <div className="font-mono text-[10px] text-muted4 mt-[2px] flex items-center gap-2">
+        <div className="font-mono text-[10px] text-muted7 mt-[2px] flex items-center gap-2">
           <span>{doc.chunk_count}ch · {doc.page_count}pg</span>
           <Info className="w-2.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-white" />
         </div>
@@ -60,7 +60,7 @@ const DocItem = memo(({ doc, isScoped, isGlobalMode, isDisabled, onToggle, onDel
       <button
         onClick={(e) => onDelete(doc.doc_id, e)}
         disabled={deletingId === doc.doc_id}
-        className="absolute right-1 top-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted4 hover:text-white focus:outline-none"
+        className="absolute right-1 top-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted7 hover:text-white focus:outline-none"
       >
         {deletingId === doc.doc_id ? <Loader2 className="w-[13px] h-[13px] animate-spin" /> : <Trash2 className="w-[13px] h-[13px]" />}
       </button>
@@ -169,7 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => navigate(path)}
                 className={`flex items-center gap-[10px] w-full px-3 py-[7px] rounded-8 text-[13px] font-medium transition-all duration-150 text-left ${active ? 'bg-white/10 text-white' : 'text-muted7 hover:text-muted11 hover:bg-raised'}`}
               >
-                <Icon className={`w-[14px] h-[14px] shrink-0 ${active ? 'text-white' : 'text-muted5'}`} />
+                <Icon className={`w-[14px] h-[14px] shrink-0 ${active ? 'text-white' : 'text-muted9'}`} />
                 {label}
               </button>
             );
@@ -189,12 +189,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           )}
           <div className="px-3 pt-4 pb-2">
             <div className="flex items-center justify-between mb-2 px-1">
-              <div className="font-mono text-[9px] text-muted4 uppercase tracking-[0.12em]">Documents</div>
+              <div className="font-mono text-[9px] text-muted7 uppercase tracking-[0.12em]">Documents</div>
               {currentSessionId && (
                 <div className="flex items-center gap-2">
-                  <button onClick={handleSelectAll} disabled={isBulkOperating} className="font-mono text-[8px] text-muted4 hover:text-white uppercase tracking-wider transition-colors">All</button>
-                  <span className="text-muted4 opacity-30">|</span>
-                  <button onClick={handleGlobalSearch} disabled={isBulkOperating} className="font-mono text-[8px] text-muted4 hover:text-white uppercase tracking-wider transition-colors">None</button>
+                  <button onClick={handleSelectAll} disabled={isBulkOperating} className="font-mono text-[8px] text-muted7 hover:text-white uppercase tracking-wider transition-colors">All</button>
+                  <span className="text-muted7 opacity-30">|</span>
+                  <button onClick={handleGlobalSearch} disabled={isBulkOperating} className="font-mono text-[8px] text-muted7 hover:text-white uppercase tracking-wider transition-colors">None</button>
                 </div>
               )}
             </div>
@@ -205,9 +205,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                   data-testid="global-search-toggle"
                   onClick={handleGlobalSearch}
                   disabled={isBulkOperating}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-6 border transition-all text-left ${isGlobalMode ? 'bg-white/10 border-white/20 text-white' : 'bg-raised/30 border-border text-muted5 hover:border-muted4'}`}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-6 border transition-all text-left ${isGlobalMode ? 'bg-white/10 border-white/20 text-white' : 'bg-raised/30 border-border text-muted9 hover:border-muted4'}`}
                 >
-                  {isBulkOperating ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Globe className={`w-[12px] h-[12px] ${isGlobalMode ? 'text-white' : 'text-muted4'}`} />}
+                  {isBulkOperating ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Globe className={`w-[12px] h-[12px] ${isGlobalMode ? 'text-white' : 'text-muted7'}`} />}
                   <span className="text-[11px] font-medium">Global Search</span>
                   {isGlobalMode && <span className="ml-auto font-mono text-[8px] uppercase tracking-tighter opacity-70 italic">Active</span>}
                 </button>
@@ -215,9 +215,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
 
             {loading ? (
-              <div className="text-muted5 text-[12px] italic px-1">Loading…</div>
+              <div className="text-muted9 text-[12px] italic px-1">Loading…</div>
             ) : documents.length === 0 ? (
-              <div className="text-muted4 text-[12px] px-1">No documents yet.</div>
+              <div className="text-muted7 text-[12px] px-1">No documents yet.</div>
             ) : (
               <div className="flex flex-col gap-[2px]">
                 {documents.map((doc) => (
@@ -239,8 +239,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           <div className="px-3 pt-4 pb-2">
             <div className="flex items-center justify-between mb-2">
-               <div className="font-mono text-[9px] text-muted4 uppercase tracking-[0.12em] px-1">Chat History</div>
-              <button onClick={handleNewChat} className="p-1 hover:bg-raised rounded-4 text-muted5 hover:text-white transition-colors" title="New Chat"><Plus className="w-[12px] h-[12px]" /></button>
+               <div className="font-mono text-[9px] text-muted7 uppercase tracking-[0.12em] px-1">Chat History</div>
+              <button onClick={handleNewChat} className="p-1 hover:bg-raised rounded-4 text-muted9 hover:text-white transition-colors" title="New Chat"><Plus className="w-[12px] h-[12px]" /></button>
             </div>
             <div className="flex flex-col gap-[2px]">
               {sessions.map((session) => (
@@ -249,9 +249,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => onSelectSession(session.session_id)}
                   className={`group relative rounded-6 px-2 py-[8px] cursor-pointer transition-colors flex items-center gap-2 ${currentSessionId === session.session_id ? 'bg-raised' : 'hover:bg-raised/50'}`}
                 >
-                  <MessageSquare className={`w-[12px] h-[12px] shrink-0 ${currentSessionId === session.session_id ? 'text-white' : 'text-muted4'}`} />
+                  <MessageSquare className={`w-[12px] h-[12px] shrink-0 ${currentSessionId === session.session_id ? 'text-white' : 'text-muted7'}`} />
                   <div className={`text-[12px] truncate pr-4 ${currentSessionId === session.session_id ? 'text-white' : 'text-muted7 group-hover:text-muted11'}`}>{session.title}</div>
-                  <button onClick={(e) => handleDeleteSession(session.session_id, e)} disabled={deletingSessionId === session.session_id} className="absolute right-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted4 hover:text-white focus:outline-none">
+                  <button onClick={(e) => handleDeleteSession(session.session_id, e)} disabled={deletingSessionId === session.session_id} className="absolute right-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted7 hover:text-white focus:outline-none">
                     {deletingSessionId === session.session_id ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Trash2 className="w-[11px] h-[11px]" />}
                   </button>
                 </div>
@@ -261,7 +261,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <div className="px-5 py-4 border-t border-border mt-auto">
-          <div className="flex items-center gap-2 text-muted4">
+          <div className="flex items-center gap-2 text-muted7">
             <Database className="w-[11px] h-[11px]" />
             <span className="font-mono text-[10px] uppercase tracking-[0.08em]">Milvus · PostgreSQL</span>
           </div>

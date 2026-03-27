@@ -306,7 +306,7 @@ const QueryPage: React.FC = () => {
                       <div className="flex items-center gap-3">
                         <button 
                           onClick={() => openCitations(msg.citations!)}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-8 bg-raised/30 border border-border hover:bg-raised transition-all text-muted5 hover:text-white group"
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-8 bg-raised/30 border border-border hover:bg-raised transition-all text-muted9 hover:text-white group"
                         >
                           <BookOpen className="w-[12px] h-[12px] group-hover:text-white" />
                           <span className="text-[11px] font-medium font-mono uppercase tracking-wider">
@@ -370,11 +370,11 @@ const QueryPage: React.FC = () => {
             />
           </div>
           <div className="mt-4 flex justify-center gap-6">
-            <div className="font-mono text-[10px] text-muted4 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-50">
+            <div className="font-mono text-[10px] text-muted7 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-50">
               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
               {documents.length} Files Available
             </div>
-            <div className="font-mono text-[10px] text-muted4 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-50">
+            <div className="font-mono text-[10px] text-muted7 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-50">
               <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
               Local Mode
             </div>
