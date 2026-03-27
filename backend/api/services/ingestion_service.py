@@ -15,7 +15,10 @@ jobs = {}
 
 def process_ingestion(job_id: str, file_paths: List[str]):
     for i, filepath in enumerate(file_paths):
-        filename = os.path.basename(filepath)
+        raw_basename = os.path.basename(filepath)
+        # Temp files are saved as "{uuid}_{original_filename}" — strip the UUID prefix
+        parts = raw_basename.split("_", 1)
+        filename = parts[1] if len(parts) == 2 else raw_basename
         jobs[job_id]["filename"] = filename
         jobs[job_id]["log_lines"].append(f"Ingesting: {filename}")
         
