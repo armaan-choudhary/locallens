@@ -21,16 +21,16 @@ echo [2/3] Starting FastAPI Backend...
 cd "%~dp0backend"
 
 :: Dependency Check
-if exist "..\.venv" (
-    "..\.venv\Scripts\python.exe" check_deps.py
+if exist "%~dp0.venv" (
+    "%~dp0.venv\Scripts\python.exe" check_deps.py
     if errorlevel 1 exit /b 1
 ) else (
     python check_deps.py
     if errorlevel 1 exit /b 1
 )
 
-if exist "..\.venv" (
-    start /B "" "..\.venv\Scripts\python.exe" main.py
+if exist "%~dp0.venv" (
+    start /B "" "%~dp0.venv\Scripts\python.exe" main.py
 ) else (
     start /B "" python main.py
 )
