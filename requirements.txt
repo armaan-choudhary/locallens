@@ -12,7 +12,6 @@ langchain
 langchain-community
 rank-bm25
 llama-cpp-python
-gradio
 numpy
 tqdm
 opencv-python-headless
@@ -20,3 +19,4 @@ fastapi
 uvicorn
 python-multipart
 pydantic
+python-dotenv

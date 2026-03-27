@@ -32,7 +32,7 @@ LocalLens is a high-performance, privacy-first Retrieval-Augmented Generation (R
    # Create and activate virtual environment
    python -m venv .venv
    source .venv/bin/activate
-   pip install -r requirements.txt
+   pip install -r backend/requirements.txt
    ```
 
 3. **Frontend Setup**:
@@ -47,17 +47,25 @@ LocalLens is a high-performance, privacy-first Retrieval-Augmented Generation (R
 
 ## Running the Application
 
-The simplest way to start the entire stack is using the provided startup script:
+The simplest way to start the entire stack is using the provided startup scripts:
 
-```bash
-chmod +x run.sh
-./run.sh
-```
+- **Linux/macOS**: `./run.sh` (or `run_mac.sh`)
+- **Windows**: `run.bat`
 
-This script orchestrates the following:
+Ensure you give execution permissions on Unix systems: `chmod +x run.sh run_mac.sh`.
+
+These scripts orchestrate the following:
 - **Database Services**: Starts Milvus and PostgreSQL via Docker Compose.
-- **Backend API**: Launches the FastAPI server at `http://localhost:8000`.
-- **Frontend UI**: Starts the Vite development server at `http://localhost:5173`.
+- **Backend API**: Launches the FastAPI server (from `/backend`) at `http://localhost:8000`.
+- **Frontend UI**: Starts the Vite development server (from `/frontend`) at `http://localhost:5173`.
+
+## Project Structure
+
+- **`backend/`**: Core FastAPI application, ingestion services, and storage logic.
+- **`frontend/`**: React 19 + Tailwind CSS user interface.
+- **`docs/`**: Project documentation, design PDFs, and tech stack reports.
+- **`scripts/`**: Utility scripts like database resets.
+- **`models/`**: Local LLM and embedding model weights.
 
 ## Architecture Overview
 
