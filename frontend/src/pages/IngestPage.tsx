@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getDocuments, ingestFiles, getIngestionStatus } from '../api/client';
-import type { Document, IngestionStatus } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { getDocuments, ingestFiles, getIngestionStatus, getSessions } from '../api/client';
+import type { Document, IngestionStatus, ChatSession } from '../types';
 import Sidebar from '../components/layout/Sidebar';
 import DropZone from '../components/ingest/DropZone';
 import FileQueue from '../components/ingest/FileQueue';
@@ -14,8 +15,14 @@ const IngestPage: React.FC = () => {
   const [jobId, setJobId]           = useState<string | null>(null);
   const [status, setStatus]         = useState<IngestionStatus | null>(null);
   const [isIngesting, setIsIngesting] = useState(false);
+  const [sessions, setSessions]       = useState<ChatSession[]>([]);
 
-  useEffect(() => { fetchDocuments(); }, []);
+  const navigate = useNavigate();
+
+  useEffect(() => { 
+    fetchDocuments(); 
+    fetchSessions();
+  }, []);
 
   /** Monitor ingestion status via polling */
   useEffect(() => {
@@ -39,6 +46,20 @@ const IngestPage: React.FC = () => {
     const docs = await getDocuments();
     setDocuments(docs);
     setDocsLoading(false);
+  };
+
+  const fetchSessions = async () => {
+    const sess = await getSessions();
+    setSessions(sess);
+  };
+
+  const handleSelectSession = (id: string | undefined) => {
+    if (id) {
+      localStorage.setItem('currentSessionId', id);
+    } else {
+      localStorage.removeItem('currentSessionId');
+    }
+    navigate('/query');
   };
 
   /** Append unique files to selection queue */
@@ -69,7 +90,17 @@ const IngestPage: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar documents={documents} loading={docsLoading} onRefresh={fetchDocuments} />
+      <Sidebar 
+        documents={documents} 
+        loading={docsLoading} 
+        onRefreshDocs={fetchDocuments}
+        sessions={sessions}
+        onRefreshSessions={fetchSessions}
+        onSelectSession={handleSelectSession}
+        sessionDocIds={new Set()}
+        onToggleDoc={async () => {}}
+        onBulkChange={() => {}}
+      />
 
       <main className="flex-1 overflow-y-auto px-10 py-9 max-w-[860px]">
         <div className="mb-7">

@@ -67,7 +67,9 @@ const ProgressBar: React.FC = () => {
 const QueryPage: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>();
+  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(
+    () => localStorage.getItem('currentSessionId') || undefined
+  );
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionDocIds, setSessionDocIds] = useState<Set<string>>(new Set());
   
@@ -93,9 +95,11 @@ const QueryPage: React.FC = () => {
 
   useEffect(() => {
     if (currentSessionId) {
+      localStorage.setItem('currentSessionId', currentSessionId);
       fetchMessages(currentSessionId);
       fetchSessionDocs(currentSessionId);
     } else {
+      localStorage.removeItem('currentSessionId');
       setMessages([]);
       setSessionDocIds(new Set());
     }
