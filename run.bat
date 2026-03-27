@@ -10,6 +10,16 @@ docker compose up -d
 :: 2. Start Backend
 echo [2/3] Starting FastAPI Backend...
 cd backend
+
+:: Dependency Check
+if exist "../.venv" (
+    ../.venv/Scripts/python.exe check_deps.py
+    if errorlevel 1 exit /b 1
+) else (
+    python check_deps.py
+    if errorlevel 1 exit /b 1
+)
+
 if exist "../.venv" (
     start /B ../.venv/Scripts/python.exe main.py
 ) else (

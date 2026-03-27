@@ -28,6 +28,14 @@ docker compose up -d
 # 2. Start Backend
 echo -e "${GREEN}[2/3] Starting FastAPI Backend...${NC}"
 cd backend
+
+# Dependency Check
+if [ -d "../.venv" ]; then
+    ../.venv/bin/python check_deps.py || exit 1
+else
+    python3 check_deps.py || exit 1
+fi
+
 if [ -d "../.venv" ]; then
     ../.venv/bin/python main.py &
 else
