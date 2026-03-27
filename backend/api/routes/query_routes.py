@@ -28,7 +28,7 @@ class QueryRequest(BaseModel):
     query: str
     session_id: str = None
 
-@router.post("/api/search/image")
+@router.post("/search/image")
 async def search_by_image(file: UploadFile = File(...), session_id: str = Form(None)):
     try:
         img = Image.open(file.file).convert("RGB")

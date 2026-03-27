@@ -10,8 +10,11 @@ MILVUS_COLLECTION_IMAGE = os.getenv("MILVUS_COLLECTION_IMAGE", "locallens_image"
 
 POSTGRES_DSN = os.getenv("POSTGRES_DSN", "postgresql://locallens:locallens@localhost:5432/locallens")
 
+# Project Root (one level up from backend/)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 # Local model paths and model identifiers
-LLAMA_MODEL_PATH = "./models/Qwen3-8B-Q4_K_M.gguf"
+LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "Qwen3-8B-Q4_K_M.gguf")
 CLIP_MODEL_NAME = "openai/clip-vit-base-patch32"
 SBERT_MODEL_NAME = "all-MiniLM-L6-v2"
 
@@ -28,4 +31,4 @@ TARGET_LATENCY_SECONDS = 15
 
 # Storage and Path Configurations
 INGEST_TEMP_DIR = "/tmp/locallens_ingest"
-STORAGE_IMAGES_DIR = "storage/images"
+STORAGE_IMAGES_DIR = os.path.join(PROJECT_ROOT, "backend", "storage", "images")
