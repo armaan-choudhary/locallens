@@ -33,12 +33,20 @@ async def search_by_image(file: UploadFile = File(...), session_id: str = Form(N
     try:
         img = Image.open(file.file).convert("RGB")
         image_emb = embed_images([img])
+        
+        from ingestion.ocr_extractor import process_page_with_ocr
+        ocr_res = process_page_with_ocr(img, 1)
+        ocr_text = ocr_res.get("text", "").strip() if ocr_res else ""
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid image file: {e}")
     
     session_doc_ids = None
     if session_id:
-        add_message(str(uuid.uuid4()), session_id, "user", "[Image Search]", scoped_docs=get_docs_for_session(session_id))
+        user_msg_content = "[Image Uploaded for Search]"
+        if ocr_text:
+            user_msg_content += f"\n\nExtracted OCR Text:\n{ocr_text}"
+            
+        add_message(str(uuid.uuid4()), session_id, "user", user_msg_content, scoped_docs=get_docs_for_session(session_id))
         scoped = get_docs_for_session(session_id)
         if scoped:
             session_doc_ids = scoped
