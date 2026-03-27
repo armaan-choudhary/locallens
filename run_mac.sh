@@ -42,13 +42,13 @@ else
 fi
 
 if [ -d "../.venv" ]; then
-    ../.venv/bin/python main.py &
+    ../.venv/bin/python main.py > backend_server.log 2>&1 &
 else
-    python3 main.py &
+    python3 main.py > backend_server.log 2>&1 &
 fi
 BACKEND_PID=$!
 
-# Wait a few seconds for backend to initialize models
+# Wait a few seconds for backend to bind (models load lazily now)
 sleep 5
 
 # 3. Start Frontend

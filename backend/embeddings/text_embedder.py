@@ -4,7 +4,13 @@ from sentence_transformers import SentenceTransformer
 from config import SBERT_MODEL_NAME
 
 _device = "cpu"
-_model = SentenceTransformer(SBERT_MODEL_NAME, device=_device)
+_model = None
+
+def get_model():
+    global _model
+    if _model is None:
+        _model = SentenceTransformer(SBERT_MODEL_NAME, device=_device)
+    return _model
 
 def embed_texts(texts: list[str]) -> np.ndarray:
     """
@@ -16,9 +22,10 @@ def embed_texts(texts: list[str]) -> np.ndarray:
     embeddings = []
     batch_size = 64
     
+    model = get_model()
     for i in range(0, len(texts), batch_size):
         batch = texts[i:i + batch_size]
-        batch_emb = _model.encode(batch, convert_to_numpy=True, normalize_embeddings=True)
+        batch_emb = model.encode(batch, convert_to_numpy=True, normalize_embeddings=True)
         embeddings.append(batch_emb.astype(np.float32))
         
     return np.vstack(embeddings)

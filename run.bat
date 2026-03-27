@@ -30,12 +30,12 @@ if exist "%~dp0.venv" (
 )
 
 if exist "%~dp0.venv" (
-    start /B "" "%~dp0.venv\Scripts\python.exe" main.py
+    start /B "" "%~dp0.venv\Scripts\python.exe" main.py > backend_server.log 2>&1
 ) else (
-    start /B "" python main.py
+    start /B "" python main.py > backend_server.log 2>&1
 )
 
-:: Wait for backend to initialize
+:: Wait for backend to initialize (server needs a moment to bind)
 timeout /t 5 /nobreak > nul
 
 :: 3. Start Frontend
