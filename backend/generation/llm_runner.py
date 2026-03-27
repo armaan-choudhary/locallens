@@ -9,7 +9,7 @@ _llm = None
 # Hardware-specific llama-cpp parameters
 _CTX        = 4096
 _BATCH      = 512
-_GPU_LAYERS = 33        # Optimized for Qwen-8B GPU offloading
+_GPU_LAYERS = -1        # -1 offloads all layers to GPU (Best for 1B-8B models)
 _THREADS    = 6
 _USE_MLOCK  = True
 

@@ -18,21 +18,21 @@ docker compose up -d
 
 :: 2. Start Backend
 echo [2/3] Starting FastAPI Backend...
-cd backend
+cd "%~dp0backend"
 
 :: Dependency Check
-if exist "../.venv" (
-    ../.venv/Scripts/python.exe check_deps.py
+if exist "..\.venv" (
+    "..\.venv\Scripts\python.exe" check_deps.py
     if errorlevel 1 exit /b 1
 ) else (
     python check_deps.py
     if errorlevel 1 exit /b 1
 )
 
-if exist "../.venv" (
-    start /B ../.venv/Scripts/python.exe main.py
+if exist "..\.venv" (
+    start /B "" "..\.venv\Scripts\python.exe" main.py
 ) else (
-    start /B python main.py
+    start /B "" python main.py
 )
 
 :: Wait for backend to initialize
@@ -40,12 +40,12 @@ timeout /t 5 /nobreak > nul
 
 :: 3. Start Frontend
 echo [3/3] Starting Vite Frontend...
-cd ../frontend
+cd "%~dp0frontend"
 if not exist "node_modules" (
     echo Installing frontend dependencies...
     call npm install
 )
-start /B npm run dev
+start /B "" npm run dev
 
 echo.
 echo LocalLens is now running!
