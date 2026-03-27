@@ -13,7 +13,7 @@ _GPU_LAYERS = -1        # -1 offloads all layers to GPU (Best for 1B-8B models)
 _THREADS    = 6
 _USE_MLOCK  = True
 
-_STOP_TOKENS = ["<|im_end|>", "<|end_of_text|>"]
+_STOP_TOKENS = ["<|im_end|>", "<|end_of_text|>", "<end_of_turn>", "<eos>"]
 
 def get_llm() -> Llama | None:
     # Lazy initialization of the LLAMA model with GPU acceleration

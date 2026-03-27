@@ -14,10 +14,13 @@ POSTGRES_DSN = os.getenv("POSTGRES_DSN", "postgresql://locallens:locallens@local
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Local model paths (choose one)
-# Standard: Qwen3-8B (~5GB)
-LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "Qwen3-8B-Q4_K_M.gguf")
+# Performance: Gemma 3 1B (~2GB)
+LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "gemma-3-1b-it-f16.gguf")
 
-# Lightweight: Qwen2.5-1.5B (~1.2GB) - Faster but slightly less accurate
+# Standard: Qwen3-8B (~5GB)
+# LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "Qwen3-8B-Q4_K_M.gguf")
+
+# Lightweight: Qwen2.5-1.5B (~1.2GB)
 # LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "qwen2.5-1.5b-instruct-q4_k_m.gguf")
 
 CLIP_MODEL_NAME = "openai/clip-vit-base-patch32"
