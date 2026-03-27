@@ -5,6 +5,15 @@ echo Starting LocalLens Stack...
 
 :: 1. Start Docker services
 echo [1/3] Checking Database Services (Milvus/Postgres)...
+where docker >nul 2>nul
+if errorlevel 1 (
+    echo.
+    echo Error: Docker is not installed or not in your PATH. 
+    echo Please install Docker Desktop for Windows to run LocalLens.
+    echo.
+    pause
+    exit /b 1
+)
 docker compose up -d
 
 :: 2. Start Backend

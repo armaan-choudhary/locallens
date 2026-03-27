@@ -23,6 +23,11 @@ trap cleanup SIGINT
 
 # 1. Start Docker services (if not already running)
 echo -e "${GREEN}[1/3] Checking Database Services (Milvus/Postgres)...${NC}"
+if ! command -v docker &> /dev/null; then
+    echo -e "${RED}Error: Docker is not installed or not in your PATH.${NC}"
+    echo -e "Please install Docker to run the LocalLens infrastructure."
+    exit 1
+fi
 docker compose up -d
 
 # 2. Start Backend

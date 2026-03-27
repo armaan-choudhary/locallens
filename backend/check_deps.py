@@ -1,6 +1,13 @@
 import sys
 import os
-import pkg_resources
+try:
+    from importlib.metadata import version, PackageNotFoundError
+except ImportError:
+    # For Python < 3.8
+    try:
+        from importlib_metadata import version, PackageNotFoundError
+    except ImportError:
+        version = None
 
 def check_dependencies():
     backend_dir = os.path.dirname(os.path.abspath(__file__))
@@ -12,13 +19,26 @@ def check_dependencies():
 
     print("Checking backend dependencies...")
     with open(req_file, "r") as f:
-        requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+        # Simple parser for requirements.txt (ignores versions/comments for quick check)
+        requirements = []
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            # Extract package name (everything before <, >, =, #)
+            name = line.split('=')[0].split('<')[0].split('>')[0].split('#')[0].strip()
+            if name:
+                requirements.append(name)
 
     missing = []
     for req in requirements:
+        if version is None:
+            # Fallback for very old python or missing importlib_metadata
+            continue
         try:
-            pkg_resources.require(req)
-        except (pkg_resources.DistributionNotFound, pkg_resources.VersionConflict):
+            # Check if the package is installed
+            version(req)
+        except PackageNotFoundError:
             missing.append(req)
 
     if missing:
