@@ -33,3 +33,5 @@ storage/images/*
 !storage/images/.gitkeep
 var/
 ~/
+
+model/*.gguf
