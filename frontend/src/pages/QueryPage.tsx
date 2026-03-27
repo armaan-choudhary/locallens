@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  getDocuments, queryDocsStream, getSessions, 
-  getSessionMessages, createSession, getSessionDocs,
-  addDocToSession, removeDocFromSession, searchByImage,
-  addDocsToSessionBulk
+  queryDocsStream, getSessionMessages, createSession, searchByImage,
+  addDocsToSessionBulk,
 } from '../api/client';
-import type { Document, ChatSession, ChatMessage, CitationCard as CitationType, SupportScore } from '../types';
-import Sidebar from '../components/layout/Sidebar';
+import type { ChatMessage, CitationCard as CitationType, SupportScore } from '../types';
+import { useAppLayout } from '../components/layout/AppLayout';
 import AnswerPanel from '../components/query/AnswerPanel';
 import CitationModal from '../components/query/CitationModal';
 import SearchBar from '../components/query/SearchBar';
@@ -18,7 +16,7 @@ const STAGES = [
   { label: 'Verifying citations…',   target: 92, duration: 2400 },
 ];
 
-const ProgressBar: React.FC = () => {
+const QueryProgressBar: React.FC = () => {
   const [pct, setPct] = useState(0);
   const [stage, setStage] = useState(0);
   const raf = useRef<number>(0);
@@ -65,17 +63,16 @@ const ProgressBar: React.FC = () => {
 };
 
 const QueryPage: React.FC = () => {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(
-    () => localStorage.getItem('currentSessionId') || undefined
-  );
+  const {
+    documents,
+    currentSessionId, setCurrentSessionId,
+    sessionDocIds, handleToggleDoc,
+    fetchSessions,
+  } = useAppLayout();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [sessionDocIds, setSessionDocIds] = useState<Set<string>>(new Set());
-  
-  const [docsLoading, setDocsLoading] = useState(true);
   const [searching, setSearching] = useState(false);
-  
+
   /** Response streaming state */
   const [streamingAnswer, setStreamingAnswer] = useState<string>('');
   const [streamingFlagged, setStreamingFlagged] = useState<string[]>([]);
@@ -85,23 +82,20 @@ const QueryPage: React.FC = () => {
   /** UI interaction state */
   const [modalOpen, setModalOpen] = useState(false);
   const [activeCitations, setActiveCitations] = useState<CitationType[]>([]);
-  
+
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchDocs();
-    fetchSessions();
-  }, []);
+  const fetchMessages = async (sid: string) => {
+    const msgs = await getSessionMessages(sid);
+    setMessages(msgs);
+  };
 
+  // Load messages when session changes
   useEffect(() => {
     if (currentSessionId) {
-      localStorage.setItem('currentSessionId', currentSessionId);
       fetchMessages(currentSessionId);
-      fetchSessionDocs(currentSessionId);
     } else {
-      localStorage.removeItem('currentSessionId');
       setMessages([]);
-      setSessionDocIds(new Set());
     }
   }, [currentSessionId]);
 
@@ -109,54 +103,10 @@ const QueryPage: React.FC = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, searching, streamingAnswer]);
 
-  const fetchDocs = async () => {
-    const docs = await getDocuments();
-    setDocuments(docs);
-    setDocsLoading(false);
-  };
-
-  const fetchSessions = async () => {
-    const sess = await getSessions();
-    setSessions(sess);
-  };
-
-  const fetchMessages = async (sid: string) => {
-    const msgs = await getSessionMessages(sid);
-    setMessages(msgs);
-  };
-
-  const fetchSessionDocs = async (sid: string) => {
-    const ids = await getSessionDocs(sid);
-    setSessionDocIds(new Set(ids));
-  };
-
-  /** Toggle document inclusion in session context */
-  const handleToggleDoc = async (docId: string) => {
-    const isIn = sessionDocIds.has(docId);
-    if (currentSessionId) {
-      if (isIn) {
-        await removeDocFromSession(currentSessionId, docId);
-      } else {
-        await addDocToSession(currentSessionId, docId);
-      }
-    }
-    
-    setSessionDocIds(prev => {
-      const s = new Set(prev);
-      if (isIn) s.delete(docId);
-      else s.add(docId);
-      return s;
-    });
-  };
-
-  const handleBulkChange = (ids: Set<string>) => {
-    setSessionDocIds(ids);
-  };
-
   /** Orchestrate streaming RAG query */
   const handleSearch = async (query: string) => {
     if (!query.trim()) return;
-    
+
     let sid = currentSessionId;
     if (!sid) {
       const res = await createSession(query.slice(0, 30) + (query.length > 30 ? '...' : ''));
@@ -164,7 +114,7 @@ const QueryPage: React.FC = () => {
         sid = res.session_id;
         setCurrentSessionId(sid);
         await fetchSessions();
-        
+
         if (sessionDocIds.size > 0) {
           await addDocsToSessionBulk(sid, Array.from(sessionDocIds));
         }
@@ -173,7 +123,7 @@ const QueryPage: React.FC = () => {
 
     const userMsg: ChatMessage = {
       message_id: 'temp-user-' + Date.now(),
-      session_id: sid,
+      session_id: sid!,
       role: 'user',
       content: query,
       scoped_docs: Array.from(sessionDocIds),
@@ -181,25 +131,17 @@ const QueryPage: React.FC = () => {
     };
     setMessages(prev => [...prev, userMsg]);
     setSearching(true);
-    
+
     setStreamingAnswer('');
     setStreamingFlagged([]);
     setStreamingScores([]);
     setStreamingVerified(true);
 
     await queryDocsStream(query, sid, (data) => {
-      if (data.answer) {
-        setStreamingAnswer(data.answer);
-      }
-      if (data.flagged_sentences) {
-        setStreamingFlagged(data.flagged_sentences);
-      }
-      if (data.support_scores) {
-        setStreamingScores(data.support_scores);
-      }
-      if (data.verified !== undefined) {
-        setStreamingVerified(data.verified);
-      }
+      if (data.answer) setStreamingAnswer(data.answer);
+      if (data.flagged_sentences) setStreamingFlagged(data.flagged_sentences);
+      if (data.support_scores) setStreamingScores(data.support_scores);
+      if (data.verified !== undefined) setStreamingVerified(data.verified);
       if (data.done) {
         setSearching(false);
         setStreamingAnswer('');
@@ -222,7 +164,7 @@ const QueryPage: React.FC = () => {
 
     const userMsg: ChatMessage = {
       message_id: 'temp-user-' + Date.now(),
-      session_id: sid,
+      session_id: sid!,
       role: 'user',
       content: "[Image Uploaded for Search]",
       created_at: new Date().toISOString()
@@ -232,9 +174,7 @@ const QueryPage: React.FC = () => {
 
     const res = await searchByImage(file, sid);
     setSearching(false);
-    if (res && sid) {
-      fetchMessages(sid);
-    }
+    if (res && sid) fetchMessages(sid);
   };
 
   const openCitations = (citations: CitationType[]) => {
@@ -245,153 +185,125 @@ const QueryPage: React.FC = () => {
   const totalChunks = documents.reduce((a, d) => a + d.chunk_count, 0);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar 
-        documents={documents} 
-        loading={docsLoading} 
-        onRefreshDocs={fetchDocs}
-        sessions={sessions}
-        currentSessionId={currentSessionId}
-        onSelectSession={setCurrentSessionId}
-        onRefreshSessions={fetchSessions}
-        sessionDocIds={sessionDocIds}
-        onToggleDoc={handleToggleDoc}
-        onBulkChange={handleBulkChange}
-      />
-
-      <main className="flex-1 flex flex-col relative min-w-0">
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-8">
-          <div className="max-w-[720px] mx-auto flex flex-col gap-10">
-            {messages.length === 0 && !searching && (
-              <div className="flex flex-col items-center justify-center h-[60vh] text-center animate-fade-in">
-                <div className="w-12 h-12 rounded-12 bg-raised flex items-center justify-center mb-6">
-                  <MessageSquare className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-white text-[18px] font-medium mb-2">How can I help you today?</h2>
-                <p className="text-muted4 text-[13px] max-w-[400px]">
-                  Ask questions about your {documents.length} indexed documents ({totalChunks.toLocaleString()} chunks).
-                </p>
+    <main className="flex-1 flex flex-col relative min-w-0">
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-6 py-8">
+        <div className="max-w-[720px] mx-auto flex flex-col gap-10">
+          {messages.length === 0 && !searching && (
+            <div className="flex flex-col items-center justify-center h-[60vh] text-center animate-fade-in">
+              <div className="w-12 h-12 rounded-12 bg-raised flex items-center justify-center mb-6">
+                <MessageSquare className="w-6 h-6 text-white" />
               </div>
-            )}
+              <h2 className="text-white text-[18px] font-medium mb-2">How can I help you today?</h2>
+              <p className="text-muted4 text-[13px] max-w-[400px]">
+                Ask questions about your {documents.length} indexed documents ({totalChunks.toLocaleString()} chunks).
+              </p>
+            </div>
+          )}
 
-            {messages.map((msg) => (
-              <div key={msg.message_id} className="flex flex-col gap-4 animate-fade-in">
-                {msg.role === 'user' ? (
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="bg-raised px-4 py-2.5 rounded-16 rounded-tr-4 max-w-[85%] text-[14px] text-muted11 leading-relaxed border border-border/50">
-                      {msg.content}
+          {messages.map((msg) => (
+            <div key={msg.message_id} className="flex flex-col gap-4 animate-fade-in">
+              {msg.role === 'user' ? (
+                <div className="flex flex-col items-end gap-2">
+                  <div className="bg-raised px-4 py-2.5 rounded-16 rounded-tr-4 max-w-[85%] text-[14px] text-muted11 leading-relaxed border border-border/50">
+                    {msg.content}
+                  </div>
+                  {msg.scoped_docs && msg.scoped_docs.length > 0 && (
+                    <div className="flex flex-wrap justify-end gap-1.5 max-w-[85%]">
+                      {msg.scoped_docs.map(docId => {
+                        const doc = documents.find(d => d.doc_id === docId);
+                        if (!doc) return null;
+                        return (
+                          <div key={docId} className="px-2 py-0.5 rounded-4 bg-white/5 border border-white/5 text-[10px] font-mono text-muted5">
+                            @{doc.filename}
+                          </div>
+                        );
+                      })}
                     </div>
-                    {msg.scoped_docs && msg.scoped_docs.length > 0 && (
-                      <div className="flex flex-wrap justify-end gap-1.5 max-w-[85%]">
-                        {msg.scoped_docs.map(docId => {
-                          const doc = documents.find(d => d.doc_id === docId);
-                          if (!doc) return null;
-                          return (
-                            <div key={docId} className="px-2 py-0.5 rounded-4 bg-white/5 border border-white/5 text-[10px] font-mono text-muted5">
-                              @{doc.filename}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex-1 min-w-0">
-                      <AnswerPanel
-                        answer={msg.content}
-                        verified={msg.verified ?? true}
-                        latency={0}
-                        flaggedSentences={msg.flagged_sentences ?? []}
-                        supportScores={msg.support_scores ?? []}
-                      />
-                    </div>
-                    {msg.citations && msg.citations.length > 0 && (
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => openCitations(msg.citations!)}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-8 bg-raised/30 border border-border hover:bg-raised transition-all text-muted9 hover:text-white group"
-                        >
-                          <BookOpen className="w-[12px] h-[12px] group-hover:text-white" />
-                          <span className="text-[11px] font-medium font-mono uppercase tracking-wider">
-                            View {msg.citations.length} Sources
-                          </span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {(searching || streamingAnswer) && (
-              <div className="flex flex-col gap-4 animate-fade-in">
-                {sessionDocIds.size > 0 && (
-                  <div className="flex flex-wrap justify-end gap-1.5 opacity-40">
-                    {Array.from(sessionDocIds).map(docId => {
-                      const doc = documents.find(d => d.doc_id === docId);
-                      if (!doc) return null;
-                      return (
-                        <div key={docId} className="px-2 py-0.5 rounded-4 bg-white/5 border border-white/5 text-[10px] font-mono text-muted5">
-                          @{doc.filename}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <AnswerPanel
-                    answer={streamingAnswer}
-                    verified={streamingVerified}
-                    latency={0}
-                    flaggedSentences={streamingFlagged}
-                    supportScores={streamingScores}
-                    isStreaming={searching && !streamingAnswer}
-                  />
+                  )}
                 </div>
-                {searching && !streamingAnswer && (
-                  <div className="flex flex-col items-center py-4">
-                    <ProgressBar />
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="flex-1 min-w-0">
+                    <AnswerPanel
+                      answer={msg.content}
+                      verified={msg.verified ?? true}
+                      latency={0}
+                      flaggedSentences={msg.flagged_sentences ?? []}
+                      supportScores={msg.support_scores ?? []}
+                    />
                   </div>
-                )}
+                  {msg.citations && msg.citations.length > 0 && (
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => openCitations(msg.citations!)}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-8 bg-raised/30 border border-border hover:bg-raised transition-all text-muted9 hover:text-white group"
+                      >
+                        <BookOpen className="w-[12px] h-[12px] group-hover:text-white" />
+                        <span className="text-[11px] font-medium font-mono uppercase tracking-wider">
+                          View {msg.citations.length} Sources
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {(searching || streamingAnswer) && (
+            <div className="flex flex-col gap-4 animate-fade-in">
+              <div className="flex-1 min-w-0">
+                <AnswerPanel
+                  answer={streamingAnswer}
+                  verified={streamingVerified}
+                  latency={0}
+                  flaggedSentences={streamingFlagged}
+                  supportScores={streamingScores}
+                  isStreaming={searching && !streamingAnswer}
+                />
               </div>
-            )}
-            <div ref={chatEndRef} />
+              {searching && !streamingAnswer && (
+                <div className="flex flex-col items-center py-4">
+                  <QueryProgressBar />
+                </div>
+              )}
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+      </div>
+
+      <div className="border-t border-border bg-surface/50 backdrop-blur-xl px-6 py-6 pb-8">
+        <div className="max-w-[720px] mx-auto relative">
+          <SearchBar
+            onSearch={handleSearch}
+            onImageSearch={handleImageSearch}
+            loading={searching}
+            docCount={documents.length}
+            chunkCount={totalChunks}
+            documents={documents}
+            sessionDocIds={sessionDocIds}
+            onToggleDoc={handleToggleDoc}
+          />
+        </div>
+        <div className="mt-4 flex justify-center gap-6">
+          <div className="font-mono text-[10px] text-muted7 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-50">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            {documents.length} Files Available
+          </div>
+          <div className="font-mono text-[10px] text-muted7 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-50">
+            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
+            Local Mode
           </div>
         </div>
+      </div>
 
-        <div className="border-t border-border bg-surface/50 backdrop-blur-xl px-6 py-6 pb-8">
-          <div className="max-w-[720px] mx-auto relative">
-            <SearchBar 
-              onSearch={handleSearch}
-              onImageSearch={handleImageSearch}
-              loading={searching}
-              docCount={documents.length}
-              chunkCount={totalChunks}
-              documents={documents}
-              sessionDocIds={sessionDocIds}
-              onToggleDoc={handleToggleDoc}
-            />
-          </div>
-          <div className="mt-4 flex justify-center gap-6">
-            <div className="font-mono text-[10px] text-muted7 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-50">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              {documents.length} Files Available
-            </div>
-            <div className="font-mono text-[10px] text-muted7 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-50">
-              <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
-              Local Mode
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <CitationModal 
+      <CitationModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         citations={activeCitations}
       />
-    </div>
+    </main>
   );
 };
 

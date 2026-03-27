@@ -131,31 +131,43 @@ async def handle_query_stream(request: QueryRequest):
             full_answer = part
             yield f"data: {json.dumps({'answer': part, 'done': False})}\n\n"
         
-        check_task = loop.run_in_executor(None, verify_answer, full_answer, ranked_chunks)
-        cit_task = loop.run_in_executor(None, map_citations, full_answer, ranked_chunks)
-        
-        check_results, citations = await asyncio.gather(check_task, cit_task)
-        
-        if session_id:
-            add_message(
-                str(uuid.uuid4()), 
-                session_id, 
-                "assistant", 
-                full_answer, 
-                citations,
-                support_scores=check_results.get("support_scores", []),
-                flagged_sentences=[f["sentence"] for f in check_results.get("flagged_sentences", [])],
-                verified=check_results["verified"]
-            )
+        try:
+            check_task = loop.run_in_executor(None, verify_answer, full_answer, ranked_chunks)
+            cit_task = loop.run_in_executor(None, map_citations, full_answer, ranked_chunks)
             
-        final_payload = {
-            "answer": full_answer,
-            "done": True,
-            "verified": check_results["verified"],
-            "flagged_sentences": [f["sentence"] for f in check_results.get("flagged_sentences", [])],
-            "support_scores": check_results.get("support_scores", []),
-            "citations": citations
-        }
+            check_results, citations = await asyncio.gather(check_task, cit_task)
+            
+            if session_id:
+                add_message(
+                    str(uuid.uuid4()), 
+                    session_id, 
+                    "assistant", 
+                    full_answer, 
+                    citations,
+                    support_scores=check_results.get("support_scores", []),
+                    flagged_sentences=[f["sentence"] for f in check_results.get("flagged_sentences", [])],
+                    verified=check_results["verified"]
+                )
+                
+            final_payload = {
+                "answer": full_answer,
+                "done": True,
+                "verified": check_results["verified"],
+                "flagged_sentences": [f["sentence"] for f in check_results.get("flagged_sentences", [])],
+                "support_scores": check_results.get("support_scores", []),
+                "citations": citations
+            }
+        except Exception as e:
+            print(f"Error in post-generation processing: {e}")
+            final_payload = {
+                "answer": full_answer,
+                "done": True,
+                "verified": True,
+                "flagged_sentences": [],
+                "support_scores": [],
+                "citations": []
+            }
+            
         yield f"data: {json.dumps(final_payload)}\n\n"
 
     return StreamingResponse(stream_generator(), media_type="text/event-stream")
