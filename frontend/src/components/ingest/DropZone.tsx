@@ -24,7 +24,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesSelected }) => {
       return new Promise((resolve) => {
         if (item.isFile) {
           item.file((f: File) => {
-            if (f.name.toLowerCase().endsWith('.pdf')) files.push(f);
+            if (f.name.toLowerCase().match(/\.(pdf|png|jpe?g)$/)) files.push(f);
             resolve();
           });
         } else if (item.isDirectory) {
@@ -66,7 +66,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesSelected }) => {
       processItems(e.dataTransfer.items);
     } else if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const files = Array.from(e.dataTransfer.files).filter(f =>
-        f.name.toLowerCase().endsWith('.pdf')
+        f.name.toLowerCase().match(/\.(pdf|png|jpe?g)$/)
       );
       if (files.length > 0) onFilesSelected(files);
     }
@@ -75,7 +75,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesSelected }) => {
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const files = Array.from(e.target.files).filter(f =>
-        f.name.toLowerCase().endsWith('.pdf')
+        f.name.toLowerCase().match(/\.(pdf|png|jpe?g)$/)
       );
       if (files.length > 0) onFilesSelected(files);
       e.target.value = '';
@@ -99,7 +99,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesSelected }) => {
         ref={fileInputRef}
         type="file"
         multiple
-        accept=".pdf,application/pdf"
+        accept=".pdf,application/pdf,image/png,image/jpeg"
         className="hidden"
         onChange={handleFileInput}
       />
@@ -123,7 +123,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesSelected }) => {
 
       <div className="text-center">
         <div className="text-[15px] font-semibold text-white mb-2">
-          Drop PDFs or folders here to ingest
+          Drop PDFs or Images here to ingest
         </div>
         <div className="text-[13px] text-muted5 max-w-[320px] mx-auto leading-relaxed">
           LocalLens will recursively index all documents for semantic search.
@@ -148,7 +148,7 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesSelected }) => {
       </div>
 
       <div className="font-mono text-[9px] text-muted4 uppercase tracking-[0.2em] mt-2">
-        PDF Format · OCR Enabled · Local Privacy
+        PDF & Image Format · OCR Enabled · Local Privacy
       </div>
     </div>
   );
