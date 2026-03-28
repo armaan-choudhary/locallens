@@ -1,7 +1,8 @@
 import os
 import re
+import ctypes
 from llama_cpp import Llama
-from config import LLAMA_MODEL_PATH, MAX_NEW_TOKENS, TEMPERATURE
+from config import LLAMA_MODEL_PATH, MAX_NEW_TOKENS, TEMPERATURE, LLM_MIN_FREE_RAM_GB
 from generation.prompt_builder import clean_output
 
 _llm = None
@@ -9,17 +10,46 @@ _llm = None
 # Hardware-specific llama-cpp parameters
 _CTX        = 4096
 _BATCH      = 512
-_GPU_LAYERS = -1        # -1 offloads all layers to GPU (Best for 1B-8B models)
+_GPU_LAYERS = 0         # Prefer CPU path for stability across local environments
 _THREADS    = 6
-_USE_MLOCK  = True
+_USE_MLOCK  = False
 
 _STOP_TOKENS = ["<|im_end|>", "<|end_of_text|>", "<end_of_turn>", "<eos>"]
+
+def _has_min_available_ram(min_free_gb: float = 3.0) -> bool:
+    """Best-effort RAM availability check to avoid unstable model initialization."""
+    try:
+        class MEMORYSTATUSEX(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+
+        status = MEMORYSTATUSEX()
+        status.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+        if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+            return True
+
+        avail_gb = status.ullAvailPhys / (1024 ** 3)
+        return avail_gb >= min_free_gb
+    except Exception:
+        return True
 
 def get_llm() -> Llama | None:
     # Lazy initialization of the LLAMA model with GPU acceleration
     global _llm
     if _llm is None:
         if not os.path.exists(LLAMA_MODEL_PATH):
+            return None
+
+        if not _has_min_available_ram(LLM_MIN_FREE_RAM_GB):
             return None
 
         _llm = Llama(
@@ -29,7 +59,7 @@ def get_llm() -> Llama | None:
             n_gpu_layers=_GPU_LAYERS,
             n_threads=_THREADS,
             use_mlock=_USE_MLOCK,
-            flash_attn=True,
+            flash_attn=False,
             verbose=False,
         )
     return _llm

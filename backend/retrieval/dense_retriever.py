@@ -16,13 +16,25 @@ async def run_dense_retrieval_async(query: str, doc_ids: list = None):
     
     # Generate embeddings
     text_emb = await loop.run_in_executor(None, embed_texts, [query])
-    image_emb = await loop.run_in_executor(None, embed_text_for_image, query)
+    image_emb = None
+    try:
+        image_emb = await loop.run_in_executor(None, embed_text_for_image, query)
+    except Exception as e:
+        print(f"Warning: image embedding unavailable, continuing with text-only retrieval: {e}")
     
     # Concurrent vector searches
     text_task = loop.run_in_executor(None, search_text, text_emb, TOP_K_RETRIEVAL, doc_ids)
-    image_task = loop.run_in_executor(None, search_image, image_emb, TOP_K_RETRIEVAL, doc_ids)
-    
-    milvus_text_res, milvus_image_res = await asyncio.gather(text_task, image_task)
+    milvus_text_res = await text_task
+
+    if image_emb is not None:
+        try:
+            image_task = loop.run_in_executor(None, search_image, image_emb, TOP_K_RETRIEVAL, doc_ids)
+            milvus_image_res = await image_task
+        except Exception as e:
+            print(f"Warning: image retrieval failed, continuing with text-only results: {e}")
+            milvus_image_res = []
+    else:
+        milvus_image_res = []
     
     async def get_text_meta(hit):
         m_id = hit["milvus_id"]

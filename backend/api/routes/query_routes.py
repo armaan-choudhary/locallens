@@ -127,9 +127,22 @@ async def handle_query_stream(request: QueryRequest):
 
     async def stream_generator():
         full_answer = ""
-        for part in generate_stream(messages):
-            full_answer = part
-            yield f"data: {json.dumps({'answer': part, 'done': False})}\n\n"
+        try:
+            for part in generate_stream(messages):
+                full_answer = part
+                yield f"data: {json.dumps({'answer': part, 'done': False})}\n\n"
+        except Exception as e:
+            print(f"Error during answer streaming: {e}")
+            error_payload = {
+                "answer": "The model failed to generate a response. Please check local model availability and disk space.",
+                "done": True,
+                "verified": False,
+                "flagged_sentences": [],
+                "support_scores": [],
+                "citations": []
+            }
+            yield f"data: {json.dumps(error_payload)}\n\n"
+            return
         
         try:
             check_task = loop.run_in_executor(None, verify_answer, full_answer, ranked_chunks)

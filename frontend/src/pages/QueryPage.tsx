@@ -137,17 +137,35 @@ const QueryPage: React.FC = () => {
     setStreamingScores([]);
     setStreamingVerified(true);
 
-    await queryDocsStream(query, sid, (data) => {
-      if (data.answer) setStreamingAnswer(data.answer);
-      if (data.flagged_sentences) setStreamingFlagged(data.flagged_sentences);
-      if (data.support_scores) setStreamingScores(data.support_scores);
-      if (data.verified !== undefined) setStreamingVerified(data.verified);
-      if (data.done) {
-        setSearching(false);
-        setStreamingAnswer('');
-        if (sid) fetchMessages(sid);
-      }
-    });
+    try {
+      await queryDocsStream(query, sid, (data) => {
+        if (data.answer) setStreamingAnswer(data.answer);
+        if (data.flagged_sentences) setStreamingFlagged(data.flagged_sentences);
+        if (data.support_scores) setStreamingScores(data.support_scores);
+        if (data.verified !== undefined) setStreamingVerified(data.verified);
+        if (data.done) {
+          setSearching(false);
+          setStreamingAnswer('');
+          if (sid) fetchMessages(sid);
+        }
+      });
+    } catch (error) {
+      setSearching(false);
+      setStreamingAnswer('');
+      const errMsg = error instanceof Error ? error.message : 'Unknown streaming error';
+      const assistantErr: ChatMessage = {
+        message_id: 'temp-assistant-error-' + Date.now(),
+        session_id: sid,
+        role: 'assistant',
+        content: `The query failed before completion. ${errMsg}`,
+        citations: [],
+        verified: false,
+        flagged_sentences: [],
+        support_scores: [],
+        created_at: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, assistantErr]);
+    }
   };
 
   /** Process image-based semantic retrieval */

@@ -6,6 +6,8 @@ import OnboardingPage from './pages/OnboardingPage';
 import IngestPage from './pages/IngestPage';
 import QueryPage from './pages/QueryPage';
 
+import AppLayout from './components/layout/AppLayout';
+
 const App: React.FC = () => {
   const [documents, setDocuments] = useState<Document[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,8 +39,10 @@ const App: React.FC = () => {
             path="/"
             element={hasDocs ? <Navigate to="/ingest" replace /> : <OnboardingPage />}
           />
-          <Route path="/ingest" element={<IngestPage />} />
-          <Route path="/query"  element={<QueryPage />} />
+          <Route element={<AppLayout />}>
+            <Route path="/ingest" element={<IngestPage />} />
+            <Route path="/query"  element={<QueryPage />} />
+          </Route>
           <Route path="*"       element={<Navigate to="/" replace />} />
         </Routes>
       </div>

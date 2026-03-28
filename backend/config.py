@@ -37,6 +37,10 @@ MAX_NEW_TOKENS = 1024
 TEMPERATURE = 0.6
 TARGET_LATENCY_SECONDS = 15
 
+# Minimum free physical RAM required before loading the local LLM.
+# Keep default conservative for stability on most systems.
+LLM_MIN_FREE_RAM_GB = float(os.getenv("LLM_MIN_FREE_RAM_GB", "3.0"))
+
 # Storage and Path Configurations
 INGEST_TEMP_DIR = "/tmp/locallens_ingest"
 STORAGE_IMAGES_DIR = os.path.join(PROJECT_ROOT, "backend", "storage", "images")

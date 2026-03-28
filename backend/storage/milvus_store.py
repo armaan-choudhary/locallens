@@ -67,7 +67,7 @@ def search_text(query_embedding: np.ndarray, top_k: int, doc_ids: list = None) -
     """Search for similar text embeddings."""
     collection = Collection(MILVUS_COLLECTION_TEXT)
     search_params = {"metric_type": "L2", "params": {"ef": min(max(top_k * 2, 64), 200)}}
-    expr = f"doc_id in [{', '.join(f'\'{d}\'' for d in doc_ids)}]" if doc_ids else None
+    expr = f"doc_id in [{', '.join(repr(d) for d in doc_ids)}]" if doc_ids else None
 
     results = collection.search(
         data=query_embedding.tolist(),
@@ -88,7 +88,7 @@ def search_image(query_embedding: np.ndarray, top_k: int, doc_ids: list = None) 
     """Search for similar image embeddings."""
     collection = Collection(MILVUS_COLLECTION_IMAGE)
     search_params = {"metric_type": "L2", "params": {"ef": min(max(top_k * 2, 64), 200)}}
-    expr = f"doc_id in [{', '.join(f'\'{d}\'' for d in doc_ids)}]" if doc_ids else None
+    expr = f"doc_id in [{', '.join(repr(d) for d in doc_ids)}]" if doc_ids else None
 
     results = collection.search(
         data=query_embedding.tolist(),

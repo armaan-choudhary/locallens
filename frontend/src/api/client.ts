@@ -67,37 +67,57 @@ export const queryDocsStream = async (
   session_id: string | undefined, 
   onUpdate: (data: Partial<QueryResult> & { done: boolean }) => void
 ): Promise<void> => {
-  try {
-    const response = await fetch('/api/query/stream', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, session_id }),
-    });
+  const response = await fetch('/api/query/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, session_id }),
+  });
 
-    if (!response.body) return;
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+  if (!response.ok) {
+    let detail = '';
+    try {
+      detail = await response.text();
+    } catch {
+      detail = '';
+    }
+    const suffix = detail ? `: ${detail}` : '';
+    throw new Error(`Streaming query failed (${response.status})${suffix}`);
+  }
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+  if (!response.body) {
+    throw new Error('Streaming query failed: empty response body');
+  }
 
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
-      
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let receivedDone = false;
+
+  while (true) {
+    const { value, done } = await reader.read();
+
+    if (value) {
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            onUpdate(data);
-          } catch (e) {
-            // No-op for malformed stream chunks
-          }
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const data = JSON.parse(line.slice(6));
+          if (data?.done) receivedDone = true;
+          onUpdate(data);
+        } catch {
+          // Ignore malformed SSE chunks and continue processing.
         }
       }
     }
-  } catch (error) {
-    console.error('Error in streaming query:', error);
+
+    if (done) break;
+  }
+
+  if (!receivedDone) {
+    throw new Error('Streaming query terminated before completion');
   }
 };
 
