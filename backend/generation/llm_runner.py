@@ -47,21 +47,25 @@ def get_llm() -> Llama | None:
     global _llm
     if _llm is None:
         if not os.path.exists(LLAMA_MODEL_PATH):
+            print(f"ERROR: Model path does not exist: {LLAMA_MODEL_PATH}")
             return None
 
-        if not _has_min_available_ram(LLM_MIN_FREE_RAM_GB):
+        print(f"DEBUG: Loading model from {LLAMA_MODEL_PATH}")
+        
+        try:
+            _llm = Llama(
+                model_path=LLAMA_MODEL_PATH,
+                n_ctx=_CTX,
+                n_batch=_BATCH,
+                n_gpu_layers=_GPU_LAYERS,
+                n_threads=_THREADS,
+                use_mlock=_USE_MLOCK,
+                flash_attn=False,
+                verbose=False,
+            )
+        except Exception as e:
+            print(f"ERROR: Failed to load model: {e}")
             return None
-
-        _llm = Llama(
-            model_path=LLAMA_MODEL_PATH,
-            n_ctx=_CTX,
-            n_batch=_BATCH,
-            n_gpu_layers=_GPU_LAYERS,
-            n_threads=_THREADS,
-            use_mlock=_USE_MLOCK,
-            flash_attn=False,
-            verbose=False,
-        )
     return _llm
 
 def generate(messages: list) -> str:
