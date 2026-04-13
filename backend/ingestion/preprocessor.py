@@ -105,53 +105,53 @@ def process_pdf(filepath: str, doc_id: str) -> Tuple[List[Dict], List[Dict]]:
         
         return chunks
 
-     text_chunks = []
-     chunk_index = 0
-     for page_num in sorted(all_text_pages.keys()):
-         page_info = all_text_pages[page_num]
-         full_text = page_info["text"]
-         source = page_info["source"]
-         
-         if not full_text.strip():
-             continue
-         
-         # Split into sentence-aware chunks
-         sentence_chunks = _create_sentence_aware_chunks(full_text, CHUNK_SIZE, CHUNK_OVERLAP)
-         
-         for chunk_idx, chunk_text in enumerate(sentence_chunks):
-             text_chunks.append({
-                 "chunk_id": str(uuid.uuid4()),
-                 "doc_id": doc_id,
-                 "page_number": page_num,
-                 "chunk_index": chunk_index,
-                 "char_start": 0,  # Approximate for sentence-based chunking
-                 "char_end": len(chunk_text),
-                 "text": chunk_text,
-                 "source": source
-             })
-             chunk_index += 1
-     
-     # Extract OCR text from image crops (text-rich regions like charts, diagrams)
-     for crop in all_image_crops:
-         try:
-             ocr_result = process_page_with_ocr(crop["image"], crop["page"])
-             ocr_text = ocr_result["text"].strip()
-             if ocr_text:  # Only add if OCR found text
-                 text_chunks.append({
-                     "chunk_id": str(uuid.uuid4()),
-                     "doc_id": doc_id,
-                     "page_number": crop["page"],
-                     "chunk_index": chunk_index,
-                     "char_start": 0,
-                     "char_end": len(ocr_text),
-                     "text": f"[Image OCR] {ocr_text}",
-                     "source": "tesseract_image"
-                 })
-                 chunk_index += 1
-         except Exception as e:
-             print(f"Failed to OCR image on page {crop['page']}: {e}")
+    text_chunks = []
+    chunk_index = 0
+    for page_num in sorted(all_text_pages.keys()):
+        page_info = all_text_pages[page_num]
+        full_text = page_info["text"]
+        source = page_info["source"]
+        
+        if not full_text.strip():
+            continue
+        
+        # Split into sentence-aware chunks
+        sentence_chunks = _create_sentence_aware_chunks(full_text, CHUNK_SIZE, CHUNK_OVERLAP)
+        
+        for chunk_idx, chunk_text in enumerate(sentence_chunks):
+            text_chunks.append({
+                "chunk_id": str(uuid.uuid4()),
+                "doc_id": doc_id,
+                "page_number": page_num,
+                "chunk_index": chunk_index,
+                "char_start": 0,  # Approximate for sentence-based chunking
+                "char_end": len(chunk_text),
+                "text": chunk_text,
+                "source": source
+            })
+            chunk_index += 1
+    
+    # Extract OCR text from image crops (text-rich regions like charts, diagrams)
+    for crop in all_image_crops:
+        try:
+            ocr_result = process_page_with_ocr(crop["image"], crop["page"])
+            ocr_text = ocr_result["text"].strip()
+            if ocr_text:  # Only add if OCR found text
+                text_chunks.append({
+                    "chunk_id": str(uuid.uuid4()),
+                    "doc_id": doc_id,
+                    "page_number": crop["page"],
+                    "chunk_index": chunk_index,
+                    "char_start": 0,
+                    "char_end": len(ocr_text),
+                    "text": f"[Image OCR] {ocr_text}",
+                    "source": "tesseract_image"
+                })
+                chunk_index += 1
+        except Exception as e:
+            print(f"Failed to OCR image on page {crop['page']}: {e}")
 
-    tagged_images = []
+tagged_images = []
     for i, crop in enumerate(all_image_crops):
         tagged_images.append({
             "image_id": str(uuid.uuid4()),
