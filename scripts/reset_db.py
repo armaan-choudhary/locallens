@@ -2,6 +2,8 @@ import os
 import shutil
 import psycopg2
 import sys
+from pymilvus import connections, utility
+
 # Add backend to path so we can import config and modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend')))
 

@@ -1,28 +1,38 @@
 import re
 
 def build_prompt(query: str, retrieved_chunks: list[dict], history: list[dict] = None) -> list[dict]:
-    # Construct a RAG-optimized system prompt with numbered context excerpts
-    context_parts = []
+     # Construct a RAG-optimized system prompt with numbered context excerpts
+     context_parts = []
+ 
+     for idx, chunk in enumerate(retrieved_chunks, start=1):
+         source_type = chunk.get("source_type", "text")
+         filename = chunk.get("filename", "Unknown")
+         page_num = chunk.get("page_number", "?")
+         
+         if source_type == "text":
+             snippet = chunk.get("text", "").strip()
+             if len(snippet) > 800:
+                 snippet = snippet[:800] + "…"
+             context_parts.append(f"[{idx}] From {filename} (page {page_num}): {snippet}")
+         else:
+             context_parts.append(f"[{idx}] From {filename} (page {page_num}): (image — no text available)")
 
-    for idx, chunk in enumerate(retrieved_chunks, start=1):
-        source_type = chunk.get("source_type", "text")
-        if source_type == "text":
-            snippet = chunk.get("text", "").strip()
-            if len(snippet) > 800:
-                snippet = snippet[:800] + "…"
-            context_parts.append(f"[{idx}] {snippet}")
-        else:
-            context_parts.append(f"[{idx}] (image — no text available)")
+     context_str = "\n\n".join(context_parts)
+     # Allow full context without aggressive truncation
+     # Model can handle up to 10k tokens, let it use more context for better answers
 
-    context_str = "\n\n".join(context_parts)
-    if len(context_str) > 10_000:
-        context_str = context_str[:10_000] + "\n[truncated]"
 
     system_content = (
-        "You are a concise, factual document assistant. "
-        "Answer using ONLY the numbered excerpts provided. "
-        "Write plain prose. Do not use Markdown, bullet points, headings, or code blocks. "
-        "Do not greet or sign off.\n\n"
+        "You are a precise, factual document assistant. Your role is to answer questions "
+        "ONLY using the information in the numbered excerpts below. "
+        "Follow these rules STRICTLY:\n\n"
+        "1. ONLY use information explicitly stated in the excerpts.\n"
+        "2. DO NOT infer, assume, or generate any information not in the excerpts.\n"
+        "3. DO NOT use your training data to fill gaps.\n"
+        "4. If the answer is not in the excerpts, respond with: "
+        "'I don't have this information in the provided documents.'\n"
+        "5. Write in plain prose. Do not use Markdown, bullet points, headings, or code blocks.\n"
+        "6. Do not greet, sign off, or add meta-commentary.\n\n"
         "EXCERPTS:\n"
         f"{context_str}"
     )
@@ -48,8 +58,8 @@ _EMOJI_RE = re.compile(
 )
 
 _CLOSING_TRIGGERS = re.compile(
-    r"(Best regards|Please (note|let|feel)|Thank you|Yours|Sincerely"
-    r"|In summary[,]? I |Note that I |I hope this|LocalLens\s*\n)",
+    r"(Best regards[,\.]?|Yours (sincerely|faithfully)?|Sincerely[,\.]?|"
+    r"Thank you[,\.]?|Respectfully|Warm regards)",
     re.IGNORECASE,
 )
 
@@ -73,21 +83,22 @@ def clean_output(text: str) -> str:
     text = _IMAGE_PLACEHOLDER_RE.sub("", text)
 
     m = _CLOSING_TRIGGERS.search(text)
-    if m:
+    if m and m.start() > len(text) * 0.8:  # Only truncate if match is in last 20% of text
         text = text[:m.start()]
 
     text = re.sub(r"[ \t]{2,}", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = re.sub(r"\.\s+\.", ".", text)
 
-    # Deduplicate repetitive sentence constructs
+    # Deduplicate ONLY exact repeats, not elaborations
     sentences = re.split(r"(?<=[.!?])\s+", text)
     deduped: list[str] = []
     for s in sentences:
         if len(s) > 60 and deduped:
             norm = re.sub(r"\s+", " ", s.lower().strip())
             prev = re.sub(r"\s+", " ", deduped[-1].lower().strip())
-            if norm == prev or norm in prev or prev in norm:
+            # Only skip if sentences are EXACTLY the same (not substring matches)
+            if norm == prev:
                 continue
         deduped.append(s)
     text = " ".join(deduped)

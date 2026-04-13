@@ -1,10 +1,22 @@
 from rank_bm25 import BM25Okapi
 from storage.postgres_store import get_all_chunks
 from config import TOP_K_RETRIEVAL
+import re
 
 _bm25_index = None
 _all_chunks_cache = []
 _is_dirty = True
+
+def _tokenize(text: str) -> list[str]:
+    """
+    Better tokenization: lowercase, remove punctuation, split on whitespace/punctuation.
+    """
+    text = text.lower()
+    # Remove punctuation but keep internal word structure
+    text = re.sub(r'[^\w\s]', ' ', text)
+    # Split on whitespace and remove empty tokens
+    tokens = [t for t in text.split() if t]
+    return tokens
 
 def mark_dirty():
     """Mark the index as needing a rebuild."""
@@ -20,7 +32,7 @@ def build_index_if_needed():
         tokenized_corpus = []
         for chunk in _all_chunks_cache:
             text = chunk.get("text", "")
-            tokens = text.lower().split()
+            tokens = _tokenize(text)
             tokenized_corpus.append(tokens)
             
         if tokenized_corpus:
@@ -38,7 +50,11 @@ def search(query: str, top_k: int = TOP_K_RETRIEVAL, doc_ids: list = None) -> li
         return []
         
     doc_id_set = set(doc_ids) if doc_ids else None
-    query_tokens = query.lower().split()
+    query_tokens = _tokenize(query)
+    
+    if not query_tokens:
+        return []
+    
     scores = _bm25_index.get_scores(query_tokens)
     
     top_indices = scores.argsort()[::-1]

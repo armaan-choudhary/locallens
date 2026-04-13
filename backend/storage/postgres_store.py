@@ -4,6 +4,7 @@ from psycopg2.pool import SimpleConnectionPool
 from psycopg2.extras import RealDictCursor
 from config import POSTGRES_DSN
 import json
+import hashlib
 
 _pool = None
 
@@ -36,27 +37,53 @@ def init_postgres():
                 cur.execute("ALTER TABLE chat_messages ADD COLUMN flagged_sentences JSONB")
                 cur.execute("ALTER TABLE chat_messages ADD COLUMN verified BOOLEAN DEFAULT TRUE")
             
-            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='scoped_docs'")
-            if not cur.fetchone():
-                cur.execute("ALTER TABLE chat_messages ADD COLUMN scoped_docs JSONB")
-                
-        conn.commit()
+             cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='scoped_docs'")
+             if not cur.fetchone():
+                 cur.execute("ALTER TABLE chat_messages ADD COLUMN scoped_docs JSONB")
+             
+             cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='documents' AND column_name='file_hash'")
+             if not cur.fetchone():
+                 cur.execute("ALTER TABLE documents ADD COLUMN file_hash TEXT UNIQUE")
+                 
+         conn.commit()
     finally:
         pool.putconn(conn)
 
 def insert_document(doc_id: str, filename: str, filepath: str, page_count: int):
-    """Insert document metadata."""
-    pool = get_pool()
-    conn = pool.getconn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO documents (doc_id, filename, filepath, page_count) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
-                (doc_id, filename, filepath, page_count)
-            )
-        conn.commit()
-    finally:
-        pool.putconn(conn)
+     """Insert document metadata. Skip if duplicate detected by MD5."""
+     # Calculate MD5 hash of file
+     md5_hash = hashlib.md5()
+     try:
+         with open(filepath, 'rb') as f:
+             for chunk in iter(lambda: f.read(4096), b''):
+                 md5_hash.update(chunk)
+         file_hash = md5_hash.hexdigest()
+     except Exception as e:
+         print(f"Warning: Could not calculate file hash: {e}")
+         file_hash = None
+     
+     pool = get_pool()
+     conn = pool.getconn()
+     try:
+         with conn.cursor() as cur:
+             # Check if this file hash already exists
+             if file_hash:
+                 cur.execute(
+                     "SELECT doc_id FROM documents WHERE file_hash = %s LIMIT 1",
+                     (file_hash,)
+                 )
+                 if cur.fetchone():
+                     print(f"Duplicate detected: {filename} (hash: {file_hash}). Skipping.")
+                     conn.rollback()
+                     return
+             
+             cur.execute(
+                 "INSERT INTO documents (doc_id, filename, filepath, page_count, file_hash) VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
+                 (doc_id, filename, filepath, page_count, file_hash)
+             )
+         conn.commit()
+     finally:
+         pool.putconn(conn)
 
 def bulk_insert_text_chunks(chunks_data: list[tuple]):
     """Insert text chunks in bulk."""

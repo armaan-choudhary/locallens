@@ -1,9 +1,10 @@
 CREATE TABLE IF NOT EXISTS documents (
-    doc_id      TEXT PRIMARY KEY,
-    filename    TEXT NOT NULL,
-    filepath    TEXT NOT NULL,
-    page_count  INTEGER,
-    ingested_at TIMESTAMP DEFAULT NOW()
+     doc_id      TEXT PRIMARY KEY,
+     filename    TEXT NOT NULL,
+     filepath    TEXT NOT NULL,
+     page_count  INTEGER,
+     file_hash   TEXT UNIQUE,      -- MD5 hash for duplicate detection
+     ingested_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS text_chunks (
