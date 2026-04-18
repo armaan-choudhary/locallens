@@ -37,3 +37,4 @@ var/
 ~/
 
 model/*.gguf
+*.whl
