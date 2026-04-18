@@ -14,28 +14,28 @@ from config import STORAGE_IMAGES_DIR
 jobs = {}
 
 def process_ingestion(job_id: str, file_paths: List[str]):
-     for i, filepath in enumerate(file_paths):
-         raw_basename = os.path.basename(filepath)
-         # Temp files are saved as "{uuid}_{original_filename}" — strip the UUID prefix
-         parts = raw_basename.split("_", 1)
-         filename = parts[1] if len(parts) == 2 else raw_basename
-         jobs[job_id]["filename"] = filename
-         jobs[job_id]["log_lines"].append(f"Ingesting: {filename}")
-         
-         try:
-             jobs[job_id]["stage"] = "extracting"
-             documents, all_text_chunks, all_image_crops = process_path(filepath)
-             
-             doc_id = documents[0]["doc_id"]
-             jobs[job_id]["total_pages"] = documents[0]["page_count"]
-             
-             insert_document(doc_id, filename, filepath, documents[0]["page_count"])
-             
-             # Check if image extraction was skipped (no poppler)
-             if not all_image_crops and ".pdf" in filepath.lower():
-                 jobs[job_id]["log_lines"].append(f"⚠ Warning: Image extraction skipped (install Poppler for multi-modal search)")
-             
-             if all_text_chunks:
+    for i, filepath in enumerate(file_paths):
+        raw_basename = os.path.basename(filepath)
+        # Temp files are saved as "{uuid}_{original_filename}" — strip the UUID prefix
+        parts = raw_basename.split("_", 1)
+        filename = parts[1] if len(parts) == 2 else raw_basename
+        jobs[job_id]["filename"] = filename
+        jobs[job_id]["log_lines"].append(f"Ingesting: {filename}")
+        
+        try:
+            jobs[job_id]["stage"] = "extracting"
+            documents, all_text_chunks, all_image_crops = process_path(filepath)
+            
+            doc_id = documents[0]["doc_id"]
+            jobs[job_id]["total_pages"] = documents[0]["page_count"]
+            
+            insert_document(doc_id, filename, filepath, documents[0]["page_count"])
+            
+            # Check if image extraction was skipped (no poppler)
+            if not all_image_crops and ".pdf" in filepath.lower():
+                jobs[job_id]["log_lines"].append(f"⚠ Warning: Image extraction skipped (install Poppler for multi-modal search)")
+            
+            if all_text_chunks:
                 jobs[job_id]["stage"] = "embedding"
                 text_texts = [c["text"] for c in all_text_chunks]
                 text_embs = embed_texts(text_texts)

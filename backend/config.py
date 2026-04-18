@@ -15,14 +15,13 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Local model paths (choose one)
 # Performance: Gemma 3 1B Q4_0 (~1GB)
-LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "gemma-3-1b-it-q4_0.gguf")
+# LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "gemma-3-1b-it-q4_0.gguf")
 
 # Optional: Gemma 3 1B f16 (~2GB)
 # LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "gemma-3-1b-it-f16.gguf")
 
 # Standard: Qwen3-8B (~5GB)
-# LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "Qwen3-8B-Q4_K_M.gguf")
-
+LLAMA_MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "Qwen3-8B-Q4_K_M.gguf")
 CLIP_MODEL_NAME = "openai/clip-vit-base-patch32"
 SBERT_MODEL_NAME = "all-MiniLM-L6-v2"
 

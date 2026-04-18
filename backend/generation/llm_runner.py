@@ -10,8 +10,8 @@ _llm = None
 # Hardware-specific llama-cpp parameters
 _CTX        = 4096
 _BATCH      = 512
-_GPU_LAYERS = 0         # Prefer CPU path for stability across local environments
-_THREADS    = 6
+_GPU_LAYERS = -1        # Offload completely to GPU to fix latency issues
+_THREADS    = 12
 _USE_MLOCK  = False
 
 _STOP_TOKENS = ["<|im_end|>", "<|end_of_text|>", "<end_of_turn>", "<eos>"]

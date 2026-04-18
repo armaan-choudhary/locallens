@@ -37,15 +37,15 @@ def init_postgres():
                 cur.execute("ALTER TABLE chat_messages ADD COLUMN flagged_sentences JSONB")
                 cur.execute("ALTER TABLE chat_messages ADD COLUMN verified BOOLEAN DEFAULT TRUE")
             
-             cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='scoped_docs'")
-             if not cur.fetchone():
-                 cur.execute("ALTER TABLE chat_messages ADD COLUMN scoped_docs JSONB")
-             
-             cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='documents' AND column_name='file_hash'")
-             if not cur.fetchone():
-                 cur.execute("ALTER TABLE documents ADD COLUMN file_hash TEXT UNIQUE")
-                 
-         conn.commit()
+            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='chat_messages' AND column_name='scoped_docs'")
+            if not cur.fetchone():
+                cur.execute("ALTER TABLE chat_messages ADD COLUMN scoped_docs JSONB")
+            
+            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='documents' AND column_name='file_hash'")
+            if not cur.fetchone():
+                cur.execute("ALTER TABLE documents ADD COLUMN file_hash TEXT UNIQUE")
+                
+        conn.commit()
     finally:
         pool.putconn(conn)
 
@@ -75,7 +75,7 @@ def insert_document(doc_id: str, filename: str, filepath: str, page_count: int):
                  if cur.fetchone():
                      print(f"Duplicate detected: {filename} (hash: {file_hash}). Skipping.")
                      conn.rollback()
-                     return
+                     raise ValueError(f"Duplicate document detected ({filename}). It has already been ingested.")
              
              cur.execute(
                  "INSERT INTO documents (doc_id, filename, filepath, page_count, file_hash) VALUES (%s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",

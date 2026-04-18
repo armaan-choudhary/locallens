@@ -1,25 +1,25 @@
 import re
 
 def build_prompt(query: str, retrieved_chunks: list[dict], history: list[dict] = None) -> list[dict]:
-     # Construct a RAG-optimized system prompt with numbered context excerpts
-     context_parts = []
- 
-     for idx, chunk in enumerate(retrieved_chunks, start=1):
-         source_type = chunk.get("source_type", "text")
-         filename = chunk.get("filename", "Unknown")
-         page_num = chunk.get("page_number", "?")
-         
-         if source_type == "text":
-             snippet = chunk.get("text", "").strip()
-             if len(snippet) > 800:
-                 snippet = snippet[:800] + "…"
-             context_parts.append(f"[{idx}] From {filename} (page {page_num}): {snippet}")
-         else:
-             context_parts.append(f"[{idx}] From {filename} (page {page_num}): (image — no text available)")
+    # Construct a RAG-optimized system prompt with numbered context excerpts
+    context_parts = []
 
-     context_str = "\n\n".join(context_parts)
-     # Allow full context without aggressive truncation
-     # Model can handle up to 10k tokens, let it use more context for better answers
+    for idx, chunk in enumerate(retrieved_chunks, start=1):
+        source_type = chunk.get("source_type", "text")
+        filename = chunk.get("filename", "Unknown")
+        page_num = chunk.get("page_number", "?")
+        
+        if source_type == "text":
+            snippet = chunk.get("text", "").strip()
+            if len(snippet) > 800:
+                snippet = snippet[:800] + "…"
+            context_parts.append(f"[{idx}] From {filename} (page {page_num}): {snippet}")
+        else:
+            context_parts.append(f"[{idx}] From {filename} (page {page_num}): (image — no text available)")
+
+    context_str = "\n\n".join(context_parts)
+    # Allow full context without aggressive truncation
+    # Model can handle up to 10k tokens, let it use more context for better answers
 
 
     system_content = (

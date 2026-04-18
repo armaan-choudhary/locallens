@@ -22,6 +22,7 @@ Thumbs.db
 tmp/
 models/
 *.log
+wget-log*
 
 # Test Artifacts
 frontend/playwright-report/
@@ -29,7 +30,8 @@ frontend/test-results/
 frontend/tests-results/
 
 # Storage & Temporary
-storage/images/*
+backend/storage/images/*
+!backend/storage/images/.gitkeep
 !storage/images/.gitkeep
 var/
 ~/

@@ -151,7 +151,7 @@ def process_pdf(filepath: str, doc_id: str) -> Tuple[List[Dict], List[Dict]]:
         except Exception as e:
             print(f"Failed to OCR image on page {crop['page']}: {e}")
 
-tagged_images = []
+    tagged_images = []
     for i, crop in enumerate(all_image_crops):
         tagged_images.append({
             "image_id": str(uuid.uuid4()),
