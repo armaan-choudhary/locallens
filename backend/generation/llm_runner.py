@@ -17,28 +17,36 @@ _USE_MLOCK  = False
 _STOP_TOKENS = ["<|im_end|>", "<|end_of_text|>", "<end_of_turn>", "<eos>"]
 
 def _has_min_available_ram(min_free_gb: float = 3.0) -> bool:
-    """Best-effort RAM availability check to avoid unstable model initialization."""
+    """Check RAM availability using cross-platform methods (prioritizing Linux)."""
     try:
-        class MEMORYSTATUSEX(ctypes.Structure):
-            _fields_ = [
-                ("dwLength", ctypes.c_ulong),
-                ("dwMemoryLoad", ctypes.c_ulong),
-                ("ullTotalPhys", ctypes.c_ulonglong),
-                ("ullAvailPhys", ctypes.c_ulonglong),
-                ("ullTotalPageFile", ctypes.c_ulonglong),
-                ("ullAvailPageFile", ctypes.c_ulonglong),
-                ("ullTotalVirtual", ctypes.c_ulonglong),
-                ("ullAvailVirtual", ctypes.c_ulonglong),
-                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
-            ]
-
-        status = MEMORYSTATUSEX()
-        status.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
-        if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+        if os.path.exists("/proc/meminfo"):
+            with open("/proc/meminfo", "r") as f:
+                for line in f:
+                    if "MemAvailable" in line:
+                        avail_kb = int(line.split()[1])
+                        return (avail_kb / (1024 * 1024)) >= min_free_gb
             return True
-
-        avail_gb = status.ullAvailPhys / (1024 ** 3)
-        return avail_gb >= min_free_gb
+        else:
+            # Fallback for Windows if needed, though this project targets Fedora
+            import ctypes
+            class MEMORYSTATUSEX(ctypes.Structure):
+                _fields_ = [
+                    ("dwLength", ctypes.c_ulong),
+                    ("dwMemoryLoad", ctypes.c_ulong),
+                    ("ullTotalPhys", ctypes.c_ulonglong),
+                    ("ullAvailPhys", ctypes.c_ulonglong),
+                    ("ullTotalPageFile", ctypes.c_ulonglong),
+                    ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong),
+                    ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+                ]
+            status = MEMORYSTATUSEX()
+            status.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+            if hasattr(ctypes, "windll") and ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+                avail_gb = status.ullAvailPhys / (1024 ** 3)
+                return avail_gb >= min_free_gb
+            return True
     except Exception:
         return True
 
@@ -60,7 +68,7 @@ def get_llm() -> Llama | None:
                 n_gpu_layers=_GPU_LAYERS,
                 n_threads=_THREADS,
                 use_mlock=_USE_MLOCK,
-                flash_attn=False,
+                flash_attn=True,
                 verbose=False,
             )
         except Exception as e:

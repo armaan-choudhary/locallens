@@ -7,15 +7,21 @@ _bm25_index = None
 _all_chunks_cache = []
 _is_dirty = True
 
+_STOPWORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "if", "in", "into", "is", "it",
+    "no", "not", "of", "on", "or", "such", "that", "the", "their", "then", "there", "these",
+    "they", "this", "to", "was", "will", "with"
+}
+
 def _tokenize(text: str) -> list[str]:
     """
-    Better tokenization: lowercase, remove punctuation, split on whitespace/punctuation.
+    Better tokenization: lowercase, remove punctuation, split on whitespace/punctuation, and remove stopwords.
     """
     text = text.lower()
     # Remove punctuation but keep internal word structure
     text = re.sub(r'[^\w\s]', ' ', text)
-    # Split on whitespace and remove empty tokens
-    tokens = [t for t in text.split() if t]
+    # Split on whitespace, remove empty tokens and stopwords
+    tokens = [t for t in text.split() if t and t not in _STOPWORDS]
     return tokens
 
 def mark_dirty():

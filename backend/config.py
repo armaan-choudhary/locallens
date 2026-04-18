@@ -26,10 +26,10 @@ CLIP_MODEL_NAME = "openai/clip-vit-base-patch32"
 SBERT_MODEL_NAME = "all-MiniLM-L6-v2"
 
 # Ingestion and retrieval tuning
-CHUNK_SIZE = 512
-CHUNK_OVERLAP = 64
+CHUNK_SIZE = 768
+CHUNK_OVERLAP = 128
 TOP_K_RETRIEVAL = 10
-TOP_K_FINAL = 3
+TOP_K_FINAL = 5
 
 # Inference parameters
 MAX_NEW_TOKENS = 2048

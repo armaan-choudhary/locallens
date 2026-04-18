@@ -70,66 +70,124 @@ def process_pdf(filepath: str, doc_id: str) -> Tuple[List[Dict], List[Dict]]:
         
         del batch_images
 
-    def _create_sentence_aware_chunks(text: str, chunk_size: int = CHUNK_SIZE, chunk_overlap: int = CHUNK_OVERLAP) -> List[str]:
+    def _create_sentence_aware_chunks(text_with_markers: List[Dict], chunk_size: int = CHUNK_SIZE, chunk_overlap: int = CHUNK_OVERLAP) -> List[Dict]:
         """
-        Split text into chunks respecting sentence boundaries.
-        Sentences are separated by '.', '!', '?', or '\n'.
+        Split text into chunks respecting sentence boundaries and page markers.
+        text_with_markers is a list of {"text": str, "page_num": int, "source": str}
         """
         import re
         
-        # Split into sentences while preserving delimiters
+        # Join all text with page markers handled
+        full_text = ""
+        page_transitions = []  # List of (char_index, page_num, source)
+        
+        for item in text_with_markers:
+            page_transitions.append((len(full_text), item["page_num"], item.get("source", "PyPDF2")))
+            full_text += item["text"] + "\n"
+
+        # Protect abbreviations by replacing their trailing period with a sentinel
+        _ABBREVS = re.compile(r'\b(U\.S|Dr|Mr|Mrs|Ms|Sr|Jr|Inc|Ltd|Corp|St|Ave|vs|etc|No|Vol|Fig)\.')
+        _SENTINEL = "\x00"
+        protected = _ABBREVS.sub(lambda m: m.group(0).replace(".", _SENTINEL), full_text)
+        
+        # Split on real sentence boundaries (period, !, ?, or newline followed by space)
         sentence_pattern = r'(?<=[.!?\n])\s+'
-        sentences = re.split(sentence_pattern, text)
-        sentences = [s.strip() for s in sentences if s.strip()]
+        raw_sentences = re.split(sentence_pattern, protected)
+        
+        # Restore sentinel back to period
+        sentences = [s.replace(_SENTINEL, ".").strip() for s in raw_sentences if s.strip()]
         
         if not sentences:
             return []
         
         chunks = []
-        current_chunk = ""
+        current_chunk_text = ""
+        current_sentences = []
         
+        def get_page_for_pos(pos):
+            """Return (page_num, source) for a character position."""
+            for i in range(len(page_transitions) - 1, -1, -1):
+                if pos >= page_transitions[i][0]:
+                    return page_transitions[i][1], page_transitions[i][2]
+            return 1, "PyPDF2"
+
+        char_offset = 0
         for sentence in sentences:
-            # If adding this sentence exceeds chunk_size, save current chunk and start new one
-            if current_chunk and len(current_chunk) + len(sentence) + 1 > chunk_size:
-                chunks.append(current_chunk)
-                current_chunk = ""
+            sentence_pos = full_text.find(sentence, char_offset)
+            if sentence_pos == -1:
+                sentence_pos = char_offset
             
-            if current_chunk:
-                current_chunk += " " + sentence
+            # If adding this sentence exceeds chunk_size, save current chunk and handle overlap
+            if current_chunk_text and len(current_chunk_text) + len(sentence) + 1 > chunk_size:
+                first_sentence_pos = full_text.find(current_sentences[0], 0)
+                page_num, source = get_page_for_pos(first_sentence_pos)
+                
+                chunks.append({
+                    "text": current_chunk_text,
+                    "page_number": page_num,
+                    "source": source
+                })
+                
+                # Carry overlap from the end of the current chunk (sentence-granular)
+                accumulated_overlap = ""
+                overlap_sentences = []
+                for s in reversed(current_sentences):
+                    if len(accumulated_overlap) + len(s) + 1 <= chunk_overlap:
+                        accumulated_overlap = s + " " + accumulated_overlap
+                        overlap_sentences.insert(0, s)
+                    else:
+                        break
+                
+                current_chunk_text = (accumulated_overlap.strip() + " " + sentence).strip()
+                current_sentences = overlap_sentences + [sentence]
             else:
-                current_chunk = sentence
+                if current_chunk_text:
+                    current_chunk_text += " " + sentence
+                else:
+                    current_chunk_text = sentence
+                current_sentences.append(sentence)
+            
+            char_offset = sentence_pos + len(sentence)
         
         # Add final chunk
-        if current_chunk:
-            chunks.append(current_chunk)
+        if current_chunk_text:
+            first_sentence_pos = full_text.find(current_sentences[0], 0)
+            page_num, source = get_page_for_pos(first_sentence_pos)
+            chunks.append({
+                "text": current_chunk_text,
+                "page_number": page_num,
+                "source": source
+            })
         
         return chunks
 
-    text_chunks = []
-    chunk_index = 0
+    # Collect all text pages with their source info
+    text_with_markers = []
     for page_num in sorted(all_text_pages.keys()):
         page_info = all_text_pages[page_num]
-        full_text = page_info["text"]
-        source = page_info["source"]
-        
-        if not full_text.strip():
-            continue
-        
-        # Split into sentence-aware chunks
-        sentence_chunks = _create_sentence_aware_chunks(full_text, CHUNK_SIZE, CHUNK_OVERLAP)
-        
-        for chunk_idx, chunk_text in enumerate(sentence_chunks):
-            text_chunks.append({
-                "chunk_id": str(uuid.uuid4()),
-                "doc_id": doc_id,
-                "page_number": page_num,
-                "chunk_index": chunk_index,
-                "char_start": 0,  # Approximate for sentence-based chunking
-                "char_end": len(chunk_text),
-                "text": chunk_text,
-                "source": source
+        if page_info["text"].strip():
+            text_with_markers.append({
+                "text": page_info["text"],
+                "page_num": page_num,
+                "source": page_info["source"]
             })
-            chunk_index += 1
+
+    # Generate document-wide sentence-aware chunks
+    doc_chunks = _create_sentence_aware_chunks(text_with_markers, CHUNK_SIZE, CHUNK_OVERLAP)
+    
+    text_chunks = []
+    for i, chunk_info in enumerate(doc_chunks):
+        text_chunks.append({
+            "chunk_id": str(uuid.uuid4()),
+            "doc_id": doc_id,
+            "page_number": chunk_info["page_number"],
+            "chunk_index": i,
+            "char_start": 0,
+            "char_end": len(chunk_info["text"]),
+            "text": chunk_info["text"],
+            "source": chunk_info["source"]
+        })
+    chunk_index = len(text_chunks)
     
     # Extract OCR text from image crops (text-rich regions like charts, diagrams)
     for crop in all_image_crops:

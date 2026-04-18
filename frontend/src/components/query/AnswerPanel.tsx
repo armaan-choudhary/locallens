@@ -10,6 +10,11 @@ function sanitiseAnswer(text: string): string {
     .replace(/—\s*source:\s*\S+,\s*page\s*\d+/gi, '')
     .replace(/\[Image found on page \d+ of .+?—.+?\]/gi, '')
     .replace(/\[Insert answer here\]['""]?/gi, '')
+    // Strip markdown bold/italic/heading markers
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
@@ -48,52 +53,79 @@ const AnswerPanel: React.FC<AnswerPanelProps> = ({
     return Math.round(avg * 100);
   }, [supportScores]);
 
-  const renderAnswer = () => {
-    if (!cleanAnswer) return null;
-    
-    if (flaggedSentences.length === 0 && supportScores.length === 0) {
-      return <span>{cleanAnswer}</span>;
+  /** Render a single sentence with optional highlighting */
+  const renderSentence = (sentence: string, key: string) => {
+    const trimmed = sentence.trim();
+    if (!trimmed) return null;
+
+    const scoreObj = supportScores.find(s =>
+      trimmed.toLowerCase().includes(s.sentence.toLowerCase()) ||
+      s.sentence.toLowerCase().includes(trimmed.toLowerCase())
+    );
+
+    const isFlagged = flaggedSentences.some(
+      s => trimmed.toLowerCase().includes(s.toLowerCase()) && trimmed.length > 10
+    );
+
+    let bgClass = "";
+    let title = "";
+
+    if (scoreObj) {
+      const s = scoreObj.score;
+      if (s > 0.7) bgClass = "hover:bg-white/5";
+      else if (s > 0.4) bgClass = "hover:bg-white/5";
+      else bgClass = "bg-white/5 hover:bg-white/10";
+      title = `Support Score: ${Math.round(s * 100)}%`;
+    } else if (isFlagged) {
+      bgClass = "bg-white/10";
+      title = "Potentially unverified statement";
     }
 
-    const sentences = cleanAnswer.split(/(?<=[.!?])\s+/);
-    
+    return (
+      <span
+        key={key}
+        className={`transition-colors rounded-2 px-0.5 cursor-help ${bgClass}`}
+        title={title}
+      >
+        {sentence}{" "}
+      </span>
+    );
+  };
+
+  const renderAnswer = () => {
+    if (!cleanAnswer) return null;
+
+    // Split into paragraphs first (preserve structure), then sentences within each
+    const paragraphs = cleanAnswer.split(/\n\n+/);
+    const hasAnalysis = flaggedSentences.length > 0 || supportScores.length > 0;
+
     return (
       <>
-        {sentences.map((sentence, i) => {
-          const trimmed = sentence.trim();
-          if (!trimmed) return null;
-
-          const scoreObj = supportScores.find(s => 
-            trimmed.toLowerCase().includes(s.sentence.toLowerCase()) || 
-            s.sentence.toLowerCase().includes(trimmed.toLowerCase())
-          );
-          
-          const isFlagged = flaggedSentences.some(
-            s => trimmed.toLowerCase().includes(s.toLowerCase()) && trimmed.length > 10
-          );
-
-          let bgClass = "";
-          let title = "";
-
-          if (scoreObj) {
-            const s = scoreObj.score;
-            if (s > 0.7) bgClass = "hover:bg-white/5";
-            else if (s > 0.4) bgClass = "hover:bg-white/5";
-            else bgClass = "bg-white/5 hover:bg-white/10";
-            title = `Support Score: ${Math.round(s * 100)}%`;
-          } else if (isFlagged) {
-            bgClass = "bg-white/10";
-            title = "Potentially unverified statement";
-          }
+        {paragraphs.map((para, pIdx) => {
+          // Handle single-newline breaks within a paragraph (numbered list items)
+          const lines = para.split(/\n/);
 
           return (
-            <span 
-              key={i} 
-              className={`transition-colors rounded-2 px-0.5 cursor-help ${bgClass}`}
-              title={title}
-            >
-              {sentence}{" "}
-            </span>
+            <div key={pIdx} style={{ marginBottom: '0.75em' }}>
+              {lines.map((line, lIdx) => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return null;
+
+                if (!hasAnalysis) {
+                  return <div key={lIdx}>{trimmedLine}</div>;
+                }
+
+                // Split line into sentences for highlighting
+                const sentences = trimmedLine.split(/(?<=[.!?])\s+/);
+                return (
+                  <div key={lIdx}>
+                    {sentences.map((s, sIdx) =>
+                      renderSentence(s, `${pIdx}-${lIdx}-${sIdx}`)
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           );
         })}
       </>
@@ -130,7 +162,7 @@ const AnswerPanel: React.FC<AnswerPanelProps> = ({
 
       {!verified && !isStreaming && <HallucinationWarning />}
 
-      <div className="answer-text leading-[1.8] text-[15px]">
+      <div className="answer-text leading-[1.8] text-[15px]" style={{ whiteSpace: 'pre-line' }}>
         {renderAnswer()}
       </div>
 

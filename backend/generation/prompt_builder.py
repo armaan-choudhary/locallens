@@ -24,27 +24,30 @@ def build_prompt(query: str, retrieved_chunks: list[dict], history: list[dict] =
 
     system_content = (
         "You are a precise, factual document assistant. Your role is to answer questions "
-        "ONLY using the information in the numbered excerpts below. "
-        "Follow these rules STRICTLY:\n\n"
+        "ONLY using the information in the numbered excerpts provided below.\n\n"
+        "STRICT GUIDELINES:\n"
         "1. ONLY use information explicitly stated in the excerpts.\n"
-        "2. DO NOT infer, assume, or generate any information not in the excerpts.\n"
-        "3. DO NOT use your training data to fill gaps.\n"
-        "4. If the answer is not in the excerpts, respond with: "
+        "2. DO NOT infer, assume, or generate any information not found in the excerpts.\n"
+        "3. DO NOT use your training data to fill gaps or elaborate on facts.\n"
+        "4. If the answer is not in the excerpts, respond exactly with: "
         "'I don't have this information in the provided documents.'\n"
-        "5. Write in plain prose. Do not use Markdown, bullet points, headings, or code blocks.\n"
-        "6. Do not greet, sign off, or add meta-commentary.\n\n"
+        "5. STRUCTURE: Organize your answer clearly. Use short paragraphs separated by blank lines for distinct points. "
+        "When listing multiple items or steps, use numbered lists (1., 2., etc.), each on its own line.\n"
+        "6. CITATIONS: Reference excerpts by number where applicable, e.g., 'According to excerpt [1]...'.\n"
+        "7. FORMATTING: Use plain text ONLY. Do NOT use markdown syntax like **bold**, *italics*, ## headings, or any other markup characters.\n"
+        "8. TONE: Be professional, concise, and direct. Do not greet, sign off, or add meta-commentary.\n\n"
         "EXCERPTS:\n"
         f"{context_str}"
     )
 
-    messages = []
+    messages = [{"role": "system", "content": system_content}]
 
     if history:
-        for turn in history[-5:]:
+        # Include a limited session history for context-aware follow-ups
+        for turn in history[-4:]:
             messages.append({"role": turn["role"], "content": turn["content"]})
 
-    final_query = f"{system_content}\n\nUSER QUESTION:\n{query}"
-    messages.append({"role": "user", "content": final_query})
+    messages.append({"role": "user", "content": query})
 
     return messages
 
@@ -81,6 +84,13 @@ def clean_output(text: str) -> str:
     text = _EMOJI_RE.sub("", text)
     text = _SOURCE_LABEL_RE.sub("", text)
     text = _IMAGE_PLACEHOLDER_RE.sub("", text)
+
+    # Strip markdown bold/italic markers (e.g. **bold**, *italic*, __bold__, _italic_)
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
+    text = re.sub(r'__(.+?)__', r'\1', text)
+    # Strip markdown heading markers (e.g. ## Heading)
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
 
     m = _CLOSING_TRIGGERS.search(text)
     if m and m.start() > len(text) * 0.8:  # Only truncate if match is in last 20% of text
