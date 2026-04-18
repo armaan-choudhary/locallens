@@ -42,8 +42,8 @@ const LogPanel: React.FC<LogPanelProps> = ({ logs }) => {
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <Terminal className="w-[12px] h-[12px] text-muted4" />
-        <span className="font-mono text-[9px] text-muted4 uppercase tracking-[0.12em]">
+        <Terminal className="w-[12px] h-[12px] text-textMuted" />
+        <span className="font-mono text-[9px] text-textMuted uppercase tracking-[0.12em]">
           Pipeline Log
         </span>
       </div>

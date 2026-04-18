@@ -72,12 +72,12 @@ const AnswerPanel: React.FC<AnswerPanelProps> = ({
 
     if (scoreObj) {
       const s = scoreObj.score;
-      if (s > 0.7) bgClass = "hover:bg-white/5";
-      else if (s > 0.4) bgClass = "hover:bg-white/5";
-      else bgClass = "bg-white/5 hover:bg-white/10";
+      if (s > 0.7) bgClass = "hover:bg-accentDim";
+      else if (s > 0.4) bgClass = "hover:bg-accentDim";
+      else bgClass = "bg-accentDim hover:bg-cardHi";
       title = `Support Score: ${Math.round(s * 100)}%`;
     } else if (isFlagged) {
-      bgClass = "bg-white/10";
+      bgClass = "bg-[#D4A0A0]/20";
       title = "Potentially unverified statement";
     }
 
@@ -136,24 +136,24 @@ const AnswerPanel: React.FC<AnswerPanelProps> = ({
     <div className="flex flex-col animate-fade-up">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[9px] text-muted7 uppercase tracking-[0.12em]">
+          <span className="font-mono text-[9px] text-textMuted uppercase tracking-[0.12em]">
             Answer
           </span>
           {verified ? (
-            <span className="flex items-center gap-1 font-mono text-[9px] text-white">
+            <span className="flex items-center gap-1 font-mono text-[9px] text-success">
               <ShieldCheck className="w-[10px] h-[10px]" /> verified
             </span>
           ) : (
-            <span className="flex items-center gap-1 font-mono text-[9px] text-muted11">
+            <span className="flex items-center gap-1 font-mono text-[9px] text-warning">
               <AlertTriangle className="w-[10px] h-[10px]" /> unverified
             </span>
           )}
         </div>
 
         {confidence !== null && !isStreaming && (
-          <div className="flex items-center gap-2 px-2 py-0.5 rounded-4 bg-raised border border-border">
-            <span className="font-mono text-[9px] text-muted7 uppercase">Confidence</span>
-            <span className={`font-mono text-[10px] font-bold ${confidence > 70 ? 'text-white' : confidence > 40 ? 'text-muted11' : 'text-muted7'}`}>
+          <div className="flex items-center gap-2 px-2 py-0.5 rounded-4 bg-card border border-border">
+            <span className="font-mono text-[9px] text-textMuted uppercase">Confidence</span>
+            <span className={`font-mono text-[10px] font-bold ${confidence > 70 ? 'text-textPrimary' : confidence > 40 ? 'text-textSecondary' : 'text-textMuted'}`}>
               {confidence}%
             </span>
           </div>
@@ -169,14 +169,14 @@ const AnswerPanel: React.FC<AnswerPanelProps> = ({
       {!isStreaming && (
         <div className="mt-8 flex items-center justify-between border-t border-border pt-4">
           <div className="flex items-center gap-4">
-            <div className="font-mono text-[11px] text-muted7">
+            <div className="font-mono text-[11px] text-textMuted">
               {latency > 0 ? `${latency.toFixed(1)}s` : 'Real-time'} &nbsp;·&nbsp; LOCALLENS-LOCAL-01
             </div>
             {supportScores.length > 0 && (
               <div className="group relative flex items-center gap-1 cursor-help">
-                <Info className="w-3 h-3 text-muted7" />
-                <span className="font-mono text-[9px] text-muted7 uppercase border-b border-muted7/30 border-dotted">Analysis Active</span>
-                <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-surface border border-border rounded-8 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 text-[10px] text-muted11 leading-normal">
+                <Info className="w-3 h-3 text-textMuted" />
+                <span className="font-mono text-[9px] text-textMuted uppercase border-b border-textMuted/30 border-dotted">Analysis Active</span>
+                <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-cardHi border border-border rounded-8 shadow-card opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 text-[10px] text-textSecondary leading-normal">
                   Sentences are cross-referenced with your documents. Hover over text to see support levels.
                 </div>
               </div>
@@ -184,10 +184,10 @@ const AnswerPanel: React.FC<AnswerPanelProps> = ({
           </div>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 text-muted9 hover:text-muted11 transition-colors focus:outline-none"
+            className="flex items-center gap-1.5 text-textMuted hover:text-textPrimary transition-colors focus:outline-none"
           >
             {copied
-              ? <Check className="w-[13px] h-[13px] text-white" />
+              ? <Check className="w-[13px] h-[13px] text-textPrimary" />
               : <Copy className="w-[13px] h-[13px]" />
             }
             <span className="text-[12px]">{copied ? 'Copied' : 'Copy'}</span>

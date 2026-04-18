@@ -7,40 +7,58 @@ export default {
   theme: {
     extend: {
       colors: {
-        // High-End Monochrome Scale
-        base:     '#000000',
-        surface:  '#0a0a0a',
-        raised:   '#121212',
-        card:     '#181818',
+        // ── Main Content Area (Beige Palette) ──────────
+        base:     '#D4BFB0',   // Primary beige background
+        surface:  '#C9B2A1',   // Slightly darker for inputs/cards
+        raised:   '#BFA898',   // Even darker for hover states
+        card:     '#E0CFC2',   // Lighter cards on beige
+        cardHi:   '#EAE0D7',   // Lightest card variant
 
-        // Monochrome Borders
-        border:   'rgba(255, 255, 255, 0.08)',
-        borderHi: 'rgba(255, 255, 255, 0.15)',
+        // ── Sidebar (Greyish Purple Palette) ───────────
+        sidebar:     '#8B7089',  // Primary sidebar background
+        sidebarDark: '#7A6178',  // Darker sidebar accents
+        sidebarHi:   '#9A8098',  // Lighter sidebar hover
 
-        // Pure Grayscale Text Scale
-        muted3:  '#262626',
-        muted4:  '#404040',
-        muted5:  '#525252',
-        muted6:  '#737373',
-        muted7:  '#a3a3a3',
-        muted9:  '#d4d4d4',
-        muted11: '#e5e5e5',
-        muted14: '#fafafa',
-        white:   '#ffffff',
+        // ── Borders ────────────────────────────────────
+        border:   'rgba(0, 0, 0, 0.10)',
+        borderHi: 'rgba(0, 0, 0, 0.18)',
+        sidebarBorder: 'rgba(255, 255, 255, 0.12)',
 
-        // Grayscale "Accent" (White/Silver focus)
-        accent:     '#ffffff',
-        accentLight:'#e5e5e5',
-        accentDim:  'rgba(255, 255, 255, 0.1)',
+        // ── Text on Beige (Warm Dark Scale) ────────────
+        textPrimary:   '#2C2825',
+        textSecondary: '#4A4542',
+        textMuted:     '#7A7370',
+        textLight:     '#9E9894',
 
-        // Minimal Status (keeping semantic meaning but desaturated)
-        success: '#e5e5e5', // Done is now bold white
-        warning: '#a3a3a3', // Warning is silver
-        error:   '#ffffff', // Error is white on dark
+        // ── Text on Sidebar (Light Scale) ──────────────
+        sidebarText:     '#F0E8EF',
+        sidebarTextDim:  'rgba(255, 255, 255, 0.60)',
+        sidebarTextMute: 'rgba(255, 255, 255, 0.40)',
+
+        // ── Accent (Purple Tint) ───────────────────────
+        accent:      '#6B5568',
+        accentLight: '#8B7089',
+        accentDim:   'rgba(107, 85, 104, 0.15)',
+
+        // ── Semantic Status ────────────────────────────
+        success: '#4A7C59',
+        warning: '#A67C3D',
+        error:   '#9E4444',
+
+        // ── Legacy compat aliases (used sparingly) ─────
+        muted3:  '#BFA898',
+        muted4:  '#9E9894',
+        muted5:  '#8A8480',
+        muted6:  '#7A7370',
+        muted7:  '#6A6360',
+        muted9:  '#4A4542',
+        muted11: '#3A3532',
+        muted14: '#2C2825',
+        white:   '#2C2825',  // "white" now maps to dark text on light bg
       },
       fontFamily: {
-        inter: ['Inter', 'system-ui', 'sans-serif'],
-        mono:  ['JetBrains Mono', 'monospace'],
+        inter: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono:  ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
         '4':  '4px',
@@ -55,8 +73,10 @@ export default {
         '1.5': '1.5px',
       },
       boxShadow: {
-        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.8)',
-        'glow': '0 0 20px rgba(255, 255, 255, 0.15)',
+        'glass': '0 4px 24px 0 rgba(0, 0, 0, 0.08)',
+        'glow':  '0 2px 12px rgba(107, 85, 104, 0.20)',
+        'card':  '0 1px 3px rgba(0, 0, 0, 0.06)',
+        'input': '0 2px 8px rgba(0, 0, 0, 0.05)',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',

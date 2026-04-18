@@ -54,7 +54,7 @@ const QueryProgressBar: React.FC = () => {
       <div className="w-full h-[2px] bg-border rounded-full overflow-hidden">
         <div className="h-full rounded-full bg-accent transition-all duration-300" style={{ width: `${pct}%` }} />
       </div>
-      <div className="flex items-center justify-between font-mono text-[10px] text-muted5">
+      <div className="flex items-center justify-between font-mono text-[10px] text-textSecondary">
         <span>{STAGES[Math.min(stage, STAGES.length - 1)].label}</span>
         <span>{Math.round(pct)}%</span>
       </div>
@@ -208,11 +208,11 @@ const QueryPage: React.FC = () => {
         <div className="max-w-[720px] mx-auto flex flex-col gap-10">
           {messages.length === 0 && !searching && (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center animate-fade-in">
-              <div className="w-12 h-12 rounded-12 bg-raised flex items-center justify-center mb-6">
-                <MessageSquare className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 rounded-12 bg-card flex items-center justify-center mb-6 shadow-card">
+                <MessageSquare className="w-6 h-6 text-accent" />
               </div>
-              <h2 className="text-white text-[18px] font-medium mb-2">How can I help you today?</h2>
-              <p className="text-muted4 text-[13px] max-w-[400px]">
+              <h2 className="text-textPrimary text-[18px] font-medium mb-2">How can I help you today?</h2>
+              <p className="text-textMuted text-[13px] max-w-[400px]">
                 Ask questions about your {documents.length} indexed documents ({totalChunks.toLocaleString()} chunks).
               </p>
             </div>
@@ -222,7 +222,7 @@ const QueryPage: React.FC = () => {
             <div key={msg.message_id} className="flex flex-col gap-4 animate-fade-in">
               {msg.role === 'user' ? (
                 <div className="flex flex-col items-end gap-2">
-                  <div className="bg-raised px-4 py-2.5 rounded-16 rounded-tr-4 max-w-[85%] text-[14px] text-muted11 leading-relaxed border border-border/50">
+                  <div className="bg-card px-4 py-2.5 rounded-16 rounded-tr-4 max-w-[85%] text-[14px] text-textSecondary leading-relaxed border border-border/50 shadow-card">
                     {msg.content}
                   </div>
                   {msg.scoped_docs && msg.scoped_docs.length > 0 && (
@@ -231,7 +231,7 @@ const QueryPage: React.FC = () => {
                         const doc = documents.find(d => d.doc_id === docId);
                         if (!doc) return null;
                         return (
-                          <div key={docId} className="px-2 py-0.5 rounded-4 bg-white/5 border border-white/5 text-[10px] font-mono text-muted5">
+                          <div key={docId} className="px-2 py-0.5 rounded-4 bg-cardHi border border-border text-[10px] font-mono text-textMuted shadow-sm">
                             @{doc.filename}
                           </div>
                         );
@@ -254,9 +254,9 @@ const QueryPage: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => openCitations(msg.citations!)}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-8 bg-raised/30 border border-border hover:bg-raised transition-all text-muted9 hover:text-white group"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-8 bg-card border border-border hover:bg-cardHi transition-all text-textSecondary hover:text-textPrimary group shadow-sm"
                       >
-                        <BookOpen className="w-[12px] h-[12px] group-hover:text-white" />
+                        <BookOpen className="w-[12px] h-[12px] group-hover:text-textPrimary" />
                         <span className="text-[11px] font-medium font-mono uppercase tracking-wider">
                           View {msg.citations.length} Sources
                         </span>
@@ -291,7 +291,7 @@ const QueryPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="border-t border-border bg-surface/50 backdrop-blur-xl px-6 py-6 pb-8">
+      <div className="border-t border-border bg-base/80 backdrop-blur-xl px-6 py-6 pb-8">
         <div className="max-w-[720px] mx-auto relative">
           <SearchBar
             onSearch={handleSearch}
@@ -305,12 +305,12 @@ const QueryPage: React.FC = () => {
           />
         </div>
         <div className="mt-4 flex justify-center gap-6">
-          <div className="font-mono text-[10px] text-muted7 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-50">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          <div className="font-mono text-[10px] text-textMuted uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-70">
+            <span className="w-1.5 h-1.5 rounded-full bg-textPrimary animate-pulse" />
             {documents.length} Files Available
           </div>
-          <div className="font-mono text-[10px] text-muted7 uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-50">
-            <span className="w-1.5 h-1.5 rounded-full bg-white/40" />
+          <div className="font-mono text-[10px] text-textMuted uppercase tracking-widest flex items-center gap-1.5 grayscale opacity-70">
+            <span className="w-1.5 h-1.5 rounded-full bg-textPrimary/40" />
             Local Mode
           </div>
         </div>

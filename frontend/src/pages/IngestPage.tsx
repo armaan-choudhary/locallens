@@ -62,10 +62,10 @@ const IngestPage: React.FC = () => {
   return (
     <main className="flex-1 overflow-y-auto px-10 py-9 max-w-[860px]">
       <div className="mb-7">
-        <h1 className="text-[22px] font-semibold text-white tracking-[-0.01em]">
+        <h1 className="text-[22px] font-semibold text-textPrimary tracking-[-0.01em]">
           Ingest Documents
         </h1>
-        <p className="text-[13px] text-muted7 mt-1 leading-relaxed">
+        <p className="text-[13px] text-textSecondary mt-1 leading-relaxed">
           Extract text from PDFs and images via OCR for local indexing.
         </p>
       </div>
@@ -79,9 +79,9 @@ const IngestPage: React.FC = () => {
             <button
               onClick={startIngestion}
               className="
-                w-full mt-5 h-[42px] rounded-10 bg-white hover:bg-muted11
-                text-[13px] font-medium text-black
-                shadow-[0_0_24px_rgba(255,255,255,0.05)]
+                w-full mt-5 h-[42px] rounded-10 bg-accent hover:bg-accentLight
+                text-[13px] font-medium text-[#F0E8EF]
+                shadow-glow
                 transition-all duration-150 focus:outline-none
               "
             >
@@ -102,11 +102,11 @@ const IngestPage: React.FC = () => {
       )}
 
       {!isIngesting && status?.stage === 'done' && (
-        <div className="mt-6 p-4 rounded-10 border border-white/10 bg-white/5 animate-fade-in">
-          <div className="text-[13px] font-medium text-white mb-1">
+        <div className="mt-6 p-4 rounded-10 border border-border bg-cardHi animate-fade-in shadow-sm">
+          <div className="text-[13px] font-medium text-textPrimary mb-1">
             ✓ Ingestion complete
           </div>
-          <div className="font-mono text-[11px] text-muted6">
+          <div className="font-mono text-[11px] text-textMuted">
             {status.log_lines[status.log_lines.length - 1] || ''}
           </div>
         </div>

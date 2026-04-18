@@ -32,9 +32,9 @@ const IngestionProgress: React.FC<IngestionProgressProps> = ({
   const pct     = totalPages > 0 ? Math.min((currentPage / totalPages) * 100, 100) : 0;
 
   return (
-    <div className="w-full rounded-10 bg-surface border border-border p-5 mb-4 shadow-xl">
+    <div className="w-full rounded-10 bg-card border border-border p-5 mb-4 shadow-card">
       <div className="flex items-center justify-between mb-5">
-        <div className="font-mono text-[9px] text-muted4 uppercase tracking-[0.2em]">
+        <div className="font-mono text-[9px] text-textMuted uppercase tracking-[0.2em]">
           Ingestion Pipeline
         </div>
         {isDone && (
@@ -45,7 +45,7 @@ const IngestionProgress: React.FC<IngestionProgressProps> = ({
         )}
       </div>
 
-      <div className="text-[14px] font-semibold text-white truncate mb-6" title={filename}>
+      <div className="text-[14px] font-semibold text-textPrimary truncate mb-6" title={filename}>
         {filename}
       </div>
 
@@ -62,7 +62,7 @@ const IngestionProgress: React.FC<IngestionProgressProps> = ({
 
       {totalPages > 0 && !isDone && (
         <div className="flex justify-end">
-          <div className="px-2 py-0.5 rounded-4 bg-raised border border-border font-mono text-[10px] text-muted5">
+          <div className="px-2 py-0.5 rounded-4 bg-card border border-border font-mono text-[10px] text-textMuted shadow-sm">
             PAGE {currentPage} OF {totalPages}
           </div>
         </div>

@@ -23,22 +23,22 @@ const FileQueue: React.FC<FileQueueProps> = ({ files, onRemove }) => {
 
   return (
     <div className="mt-4 flex flex-col gap-[6px]">
-      <div className="font-mono text-[9px] text-muted4 uppercase tracking-[0.12em] mb-1">
+      <div className="font-mono text-[9px] text-textMuted uppercase tracking-[0.12em] mb-1">
         Queue — {files.length} file{files.length > 1 ? 's' : ''}
       </div>
       {files.map((file, i) => (
         <div
           key={i}
-          className="flex items-center gap-3 bg-surface border border-border rounded-8 px-3 py-[9px] group"
+          className="flex items-center gap-3 bg-card border border-border rounded-8 px-3 py-[9px] group shadow-sm"
         >
-          <FileText className="w-[14px] h-[14px] text-muted5 shrink-0" />
+          <FileText className="w-[14px] h-[14px] text-textMuted shrink-0" />
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] text-muted11 truncate font-medium">{file.name}</div>
-            <div className="font-mono text-[10px] text-muted4 mt-[1px]">{formatBytes(file.size)}</div>
+            <div className="text-[13px] text-textPrimary truncate font-medium">{file.name}</div>
+            <div className="font-mono text-[10px] text-textMuted mt-[1px]">{formatBytes(file.size)}</div>
           </div>
           <button
             onClick={() => onRemove(i)}
-            className="text-muted4 hover:text-error opacity-0 group-hover:opacity-100 transition-all focus:outline-none p-1"
+            className="text-textMuted hover:text-error opacity-0 group-hover:opacity-100 transition-all focus:outline-none p-1"
             title="Remove"
           >
             <X className="w-[13px] h-[13px]" />

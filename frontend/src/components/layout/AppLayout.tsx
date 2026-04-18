@@ -3,7 +3,6 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import {
   getDocuments, getSessions, getSessionDocs,
   addDocToSession, removeDocFromSession,
-  addDocsToSessionBulk, clearSessionDocs,
 } from '../../api/client';
 import type { Document, ChatSession } from '../../types';
 import Sidebar from './Sidebar';

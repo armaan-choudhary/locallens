@@ -46,13 +46,13 @@ const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
         </span>
 
         <span
-          className="text-[12px] font-medium text-muted11 truncate flex-1 min-w-0"
+          className="text-[12px] font-medium text-textSecondary truncate flex-1 min-w-0"
           title={fname}
         >
           {displayName}
         </span>
 
-        <span className="font-mono text-[10px] text-muted5 shrink-0">
+        <span className="font-mono text-[10px] text-textMuted shrink-0">
           pg {citation.page_number}
         </span>
       </div>
@@ -60,8 +60,8 @@ const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
       {/* Chunk text block */}
       {chunkText && !isImage && (
         <div className={`
-          font-mono text-[11px] leading-[1.75] text-muted7
-          bg-surface border border-border rounded-6 px-3 py-[10px] mb-2
+          font-mono text-[11px] leading-[1.75] text-textSecondary
+          bg-cardHi border border-border rounded-6 px-3 py-[10px] mb-2
           ${!expanded && isLong ? 'max-h-[90px] overflow-hidden' : ''}
         `}>
           {chunkText}
@@ -80,7 +80,7 @@ const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
       )}
 
       {!chunkText && !isImage && (
-        <div className="font-mono text-[11px] text-muted4 italic mb-2 px-1">
+        <div className="font-mono text-[11px] text-textMuted italic mb-2 px-1">
           No text chunk available.
         </div>
       )}
@@ -89,7 +89,7 @@ const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
         <button
           onClick={() => setExpanded(v => !v)}
           className="
-            text-[11px] text-muted5 hover:text-muted9
+            text-[11px] text-textMuted hover:text-textPrimary
             transition-colors focus:outline-none mb-2 block
           "
         >
@@ -99,7 +99,7 @@ const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
 
       {/* Bbox row — only for verified image sources */}
       {hasBbox && citation.bbox && (
-        <div className="font-mono text-[9px] text-muted3 tracking-[0.04em] mt-1">
+        <div className="font-mono text-[9px] text-textMuted tracking-[0.04em] mt-1">
           BBOX &nbsp;
           {[
             `x₀=${Math.round(citation.bbox[0])}`,

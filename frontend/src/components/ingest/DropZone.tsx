@@ -88,8 +88,8 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesSelected }) => {
         relative w-full rounded-12 border-1.5 transition-all duration-300
         flex flex-col items-center justify-center gap-6 py-16
         ${isDragOver
-          ? 'border-white bg-white/5 shadow-glow'
-          : 'border-dashed border-border bg-surface hover:border-white/20 hover:bg-raised/50'}
+          ? 'border-accent bg-accentDim shadow-glow'
+          : 'border-dashed border-border bg-card hover:border-accent hover:bg-cardHi'}
       `}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -116,16 +116,16 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesSelected }) => {
 
       <div className={`
         w-16 h-16 rounded-16 flex items-center justify-center transition-all duration-500
-        ${isDragOver ? 'bg-white text-black scale-110 shadow-glow' : 'bg-raised border border-border text-muted6'}
+        ${isDragOver ? 'bg-accent text-[#F0E8EF] scale-110 shadow-glow' : 'bg-card border border-border text-textMuted'}
       `}>
         <UploadCloud className={`w-7 h-7 ${isDragOver ? 'animate-pulse' : ''}`} />
       </div>
 
       <div className="text-center">
-        <div className="text-[15px] font-semibold text-white mb-2">
+        <div className="text-[15px] font-semibold text-textPrimary mb-2">
           Drop PDFs or Images here to ingest
         </div>
-        <div className="text-[13px] text-muted5 max-w-[320px] mx-auto leading-relaxed">
+        <div className="text-[13px] text-textSecondary max-w-[320px] mx-auto leading-relaxed">
           LocalLens will recursively index all documents for semantic search.
         </div>
       </div>
@@ -133,21 +133,21 @@ const DropZone: React.FC<DropZoneProps> = ({ onFilesSelected }) => {
       <div className="flex items-center gap-3">
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="px-4 py-2 rounded-8 bg-white text-black text-[12px] font-bold hover:bg-muted11 transition-colors flex items-center gap-2"
+          className="px-4 py-2 rounded-8 bg-accent text-[#F0E8EF] text-[12px] font-bold hover:bg-accentLight shadow-glow transition-colors flex items-center gap-2"
         >
           <FileText className="w-3.5 h-3.5" />
           Select Files
         </button>
         <button
           onClick={() => folderInputRef.current?.click()}
-          className="px-4 py-2 rounded-8 bg-raised border border-border text-white text-[12px] font-bold hover:bg-white/5 transition-colors flex items-center gap-2"
+          className="px-4 py-2 rounded-8 bg-card border border-border text-textSecondary text-[12px] font-bold shadow-sm hover:text-textPrimary hover:bg-cardHi transition-colors flex items-center gap-2"
         >
           <FolderOpen className="w-3.5 h-3.5" />
           Select Folder
         </button>
       </div>
 
-      <div className="font-mono text-[9px] text-muted4 uppercase tracking-[0.2em] mt-2">
+      <div className="font-mono text-[9px] text-textMuted uppercase tracking-[0.2em] mt-2">
         PDF & Image Format · OCR Enabled · Local Privacy
       </div>
     </div>

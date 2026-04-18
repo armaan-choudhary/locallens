@@ -22,7 +22,7 @@ const App: React.FC = () => {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-base gap-4">
         <div className="w-6 h-6 rounded-full border-2 border-border border-t-accent animate-spin" />
-        <div className="font-mono text-[11px] text-muted4 uppercase tracking-[0.15em] animate-pulse-slow">
+        <div className="font-mono text-[11px] text-textMuted uppercase tracking-[0.15em] animate-pulse-slow">
           Initializing LocalLens
         </div>
       </div>
@@ -33,7 +33,7 @@ const App: React.FC = () => {
 
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <div className="bg-base min-h-screen text-muted9 font-inter">
+      <div className="bg-base min-h-screen text-textPrimary font-inter">
         <Routes>
           <Route
             path="/"

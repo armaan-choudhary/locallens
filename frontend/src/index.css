@@ -8,54 +8,54 @@
 
 html, body, #root {
   height: 100%;
-  background: #000000;
-  color: #a3a3a3;
-  font-family: 'Inter', system-ui, sans-serif;
+  background: #D4BFB0;
+  color: #2C2825;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Minimalist Monochrome Scrollbar ──────────────── */
-::-webkit-scrollbar              { width: 2px; height: 2px; }
+/* ── Elegant Thin Scrollbar ──────────────────────── */
+::-webkit-scrollbar              { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track        { background: transparent; }
-::-webkit-scrollbar-thumb        { background: #262626; border-radius: 1px; }
-::-webkit-scrollbar-thumb:hover  { background: #404040; }
+::-webkit-scrollbar-thumb        { background: rgba(0, 0, 0, 0.15); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover  { background: rgba(0, 0, 0, 0.25); }
 
-::selection { background: rgba(255, 255, 255, 0.15); color: #ffffff; }
+::selection { background: rgba(107, 85, 104, 0.25); color: #2C2825; }
 
-/* ── Monochrome Terminal Panel ───────────────────── */
+/* ── Terminal / Log Panel ────────────────────────── */
 .terminal-panel {
-  background: #0a0a0a;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  background: #2C2825;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
   padding: 16px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   line-height: 1.8;
   max-height: 250px;
   overflow-y: auto;
-  color: #e5e5e5;
+  color: #E0CFC2;
   white-space: pre-wrap;
   word-break: break-all;
 }
 
-.terminal-line-dim  { color: #404040; }
-.terminal-line-ok   { color: #ffffff; font-weight: 500; }
-.terminal-line-err  { color: #ffffff; text-decoration: underline; text-decoration-style: dotted; }
-.terminal-line-info { color: #a3a3a3; }
+.terminal-line-dim  { color: #7A7370; }
+.terminal-line-ok   { color: #E0CFC2; font-weight: 500; }
+.terminal-line-err  { color: #D4A0A0; text-decoration: underline; text-decoration-style: dotted; }
+.terminal-line-info { color: #9E9894; }
 
-/* ── High-Contrast Progress Bar ───────────────────── */
+/* ── Progress Bar ────────────────────────────────── */
 .progress-track {
   width: 100%;
   height: 2px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.08);
   border-radius: 1px;
   overflow: hidden;
 }
 .progress-fill {
   height: 100%;
-  background: #ffffff;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  background: #6B5568;
+  box-shadow: 0 0 8px rgba(107, 85, 104, 0.3);
   border-radius: 1px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -68,28 +68,27 @@ html, body, #root {
   animation: indeterminate-progress 2s infinite linear;
 }
 
-/* ── Monochrome Citation Card ────────────────────── */
+/* ── Citation Card ───────────────────────────────── */
 .citation-card {
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 2px solid rgba(107, 85, 104, 0.2);
   transition: all 0.2s ease;
 }
 .citation-card:hover {
-  border-left-color: #ffffff;
-  background: rgba(255, 255, 255, 0.02);
+  border-left-color: #6B5568;
+  background: rgba(107, 85, 104, 0.05);
 }
 
-/* ── Monochrome Typography ───────────────────────── */
+/* ── Answer Typography ───────────────────────────── */
 .answer-text {
   font-size: 15px;
   line-height: 1.8;
-  color: #d4d4d4;
-  white-space: pre-wrap;
+  color: #2C2825;
 }
 .answer-text .flagged {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(158, 68, 68, 0.3);
 }
 
-/* ── Modern Fade Animations ─────────────────────── */
+/* ── Fade Animations ─────────────────────────────── */
 .animate-fade-up {
   animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -106,17 +105,17 @@ html, body, #root {
   to   { opacity: 1; }
 }
 
-/* ── Glassmorphism Utility ──────────────────────── */
+/* ── Glass Panel ─────────────────────────────────── */
 .glass-panel {
-  background: rgba(10, 10, 10, 0.7);
+  background: rgba(212, 191, 176, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-/* ── Subtle Inputs ──────────────────────────────── */
+/* ── Search Input ────────────────────────────────── */
 .search-input:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(107, 85, 104, 0.3) !important;
+  background: rgba(255, 255, 255, 0.15);
 }

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, memo, useCallback } from 'react';
-import { Search, Loader2, FileText, Check, Image as ImageIcon, Camera } from 'lucide-react';
+import { Search, Loader2, FileText, Check, Camera } from 'lucide-react';
 import type { Document } from '../../types';
 
 interface SearchBarProps {
@@ -15,17 +15,17 @@ interface SearchBarProps {
 
 /** Individual document suggestion item in the mention dropdown */
 const MentionItem = memo(({ doc, isSelected, isActive, onClick, onMouseEnter }: any) => (
-  <button
+    <button
     onClick={onClick}
     onMouseEnter={onMouseEnter}
-    className={`w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors ${isActive ? 'bg-white/5' : 'hover:bg-raised/50'}`}
+    className={`w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors ${isActive ? 'bg-card' : 'hover:bg-cardHi'}`}
   >
-    <div className={`w-7 h-7 rounded-6 flex items-center justify-center shrink-0 ${isSelected ? 'bg-white/10 text-white' : 'bg-raised text-muted4'}`}>
+    <div className={`w-7 h-7 rounded-6 flex items-center justify-center shrink-0 ${isSelected ? 'bg-cardHi text-textPrimary' : 'bg-transparent text-textMuted'}`}>
       {isSelected ? <Check className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
     </div>
     <div className="flex-1 min-w-0">
-      <div className={`text-[13px] truncate ${isSelected ? 'text-white font-medium' : 'text-muted11'}`}>{doc.filename}</div>
-      <div className="text-[10px] text-muted4 font-mono truncate">{doc.chunk_count} chunks · {doc.page_count} pages</div>
+      <div className={`text-[13px] truncate ${isSelected ? 'text-textPrimary font-medium' : 'text-textSecondary'}`}>{doc.filename}</div>
+      <div className="text-[10px] text-textMuted font-mono truncate">{doc.chunk_count} chunks · {doc.page_count} pages</div>
     </div>
   </button>
 ));
@@ -132,10 +132,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
       />
 
       {showMentions && filteredDocs.length > 0 && (
-        <div className="absolute bottom-full left-0 mb-2 w-[300px] bg-surface border border-border rounded-12 shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <div className="px-3 py-2 border-b border-border bg-raised/30 flex items-center justify-between">
-            <span className="font-mono text-[9px] text-white/40 uppercase tracking-widest">Select Scope</span>
-            <span className="font-mono text-[8px] text-muted4 opacity-50">↑↓ to navigate</span>
+        <div className="absolute bottom-full left-0 mb-2 w-[300px] bg-cardHi border border-border rounded-12 shadow-card overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="px-3 py-2 border-b border-border bg-base flex items-center justify-between">
+            <span className="font-mono text-[9px] text-textMuted uppercase tracking-widest">Select Scope</span>
+            <span className="font-mono text-[8px] text-textMuted opacity-50">↑↓ to navigate</span>
           </div>
           <div className="max-h-[240px] overflow-y-auto custom-scrollbar">
             {filteredDocs.map((doc, i) => (
@@ -153,21 +153,21 @@ const SearchBar: React.FC<SearchBarProps> = ({
       )}
 
       <form onSubmit={handleSubmit} className="relative group">
-        <div className="min-h-[52px] w-full bg-raised/50 border border-border rounded-12 flex flex-wrap items-center gap-2 py-2 px-4 focus-within:border-white/20 focus-within:bg-raised/80 transition-all shadow-sm">
+        <div className="min-h-[52px] w-full bg-card border border-border rounded-12 flex flex-wrap items-center gap-2 py-2 px-4 focus-within:border-borderHi focus-within:bg-cardHi transition-all shadow-input">
           <div className="flex items-center gap-1.5 shrink-0 mr-1">
-            {loading ? <Loader2 className="w-[18px] h-[18px] text-white animate-spin" /> : <Search className="w-[18px] h-[18px] text-muted5" />}
+            {loading ? <Loader2 className="w-[18px] h-[18px] text-textPrimary animate-spin" /> : <Search className="w-[18px] h-[18px] text-textMuted" />}
           </div>
 
           {selectedDocs.map(doc => (
             <div 
               key={doc.doc_id} 
-              className="flex items-center gap-1.5 bg-white/10 border border-white/5 rounded-6 px-2 py-1 animate-fade-in"
+              className="flex items-center gap-1.5 bg-cardHi border border-border rounded-6 px-2 py-1 animate-fade-in shadow-sm"
             >
-              <span className="text-[11px] font-medium text-white">@{doc.filename}</span>
+              <span className="text-[11px] font-medium text-textPrimary">@{doc.filename}</span>
               <button
                 type="button"
                 onClick={() => onToggleDoc(doc.doc_id)}
-                className="text-white/40 hover:text-white transition-colors"
+                className="text-textMuted hover:text-textPrimary transition-colors"
               >
                 <Check className="w-2.5 h-2.5" />
               </button>
@@ -181,7 +181,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder={selectedDocs.length === 0 ? placeholderText : ""}
-            className="flex-1 min-w-[120px] bg-transparent border-none py-1.5 text-[14px] text-white placeholder:text-muted4 focus:outline-none"
+            className="flex-1 min-w-[120px] bg-transparent border-none py-1.5 text-[14px] text-textPrimary placeholder:text-textMuted focus:outline-none"
             disabled={loading}
           />
 
@@ -191,7 +191,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
               title="Search by image"
-              className="p-2 rounded-8 text-muted4 hover:text-white hover:bg-white/5 transition-all"
+              className="p-2 rounded-8 text-textMuted hover:text-textPrimary hover:bg-card transition-all"
             >
               <Camera className="w-[18px] h-[18px]" />
             </button>
@@ -199,7 +199,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             <button
               type="submit"
               disabled={loading || !query.trim()}
-              className={`p-2 rounded-8 transition-all ${query.trim() ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.15)]' : 'text-muted4 grayscale'}`}
+              className={`p-2 rounded-8 transition-all ${query.trim() ? 'bg-accent text-[#F0E8EF] shadow-glow' : 'text-textMuted grayscale'}`}
             >
               <Search className="w-[18px] h-[18px]" />
             </button>

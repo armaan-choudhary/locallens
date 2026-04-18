@@ -1,10 +1,9 @@
-import React, { useEffect, useState, memo, useCallback } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Upload, Search, Database, CheckSquare, Square, Globe, Trash2, Loader2, MessageSquare, Plus, Info } from 'lucide-react';
+import { Upload, Search, CheckSquare, Square, Trash2, Loader2, Info, Globe, Plus, MessageSquare, Database } from 'lucide-react';
 import type { Document, ChatSession } from '../../types';
 import { 
   deleteDocument, deleteSession, createSession, 
-  addDocToSession, removeDocFromSession,
   addDocsToSessionBulk, clearSessionDocs 
 } from '../../api/client';
 import DocumentDetailsModal from '../ingest/DocumentDetailsModal';
@@ -36,31 +35,31 @@ const DocItem = memo(({ doc, isScoped, isGlobalMode, isDisabled, onToggle, onDel
   return (
     <div className={`
       group relative rounded-6 px-2 py-[8px] transition-colors flex items-start gap-2 
-      ${isScoped && !isGlobalMode ? 'bg-white/10' : 'hover:bg-raised'}
+      ${isScoped && !isGlobalMode ? 'bg-sidebarDark' : 'hover:bg-sidebarHi'}
       ${isDisabled && !isScoped ? 'opacity-40 grayscale-[0.5]' : ''}
     `}>
       <button
         onClick={handleToggle}
         disabled={isDisabled || isToggling}
         className={`mt-[1px] shrink-0 transition-colors focus:outline-none 
-          ${isScoped && !isGlobalMode ? 'text-white' : 'text-muted7 hover:text-white'}`}
+          ${isScoped && !isGlobalMode ? 'text-sidebarText' : 'text-sidebarTextDim hover:text-sidebarText'}`}
       >
         {isToggling ? <Loader2 className="w-[13px] h-[13px] animate-spin" /> :
          isScoped && !isGlobalMode ? <CheckSquare className="w-[13px] h-[13px]" /> : <Square className="w-[13px] h-[13px]" />}
       </button>
       <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onInfo(doc.doc_id)}>
-        <div className={`text-[12px] font-medium truncate pr-5 ${isScoped && !isGlobalMode ? 'text-white' : 'text-muted11'}`} title={doc.filename}>
+        <div className={`text-[12px] font-medium truncate pr-5 ${isScoped && !isGlobalMode ? 'text-sidebarText' : 'text-sidebarTextDim group-hover:text-sidebarText'}`} title={doc.filename}>
           {doc.filename}
         </div>
-        <div className="font-mono text-[10px] text-muted7 mt-[2px] flex items-center gap-2">
+        <div className="font-mono text-[10px] text-sidebarTextMute mt-[2px] flex items-center gap-2">
           <span>{doc.chunk_count}ch · {doc.page_count}pg</span>
-          <Info className="w-2.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-white" />
+          <Info className="w-2.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-sidebarText" />
         </div>
       </div>
       <button
         onClick={(e) => onDelete(doc.doc_id, e)}
         disabled={deletingId === doc.doc_id}
-        className="absolute right-1 top-2 opacity-0 group-hover:opacity-100 transition-opacity text-muted7 hover:text-white focus:outline-none"
+        className="absolute right-1 top-2 opacity-0 group-hover:opacity-100 transition-opacity text-sidebarTextDim hover:text-sidebarText focus:outline-none"
       >
         {deletingId === doc.doc_id ? <Loader2 className="w-[13px] h-[13px] animate-spin" /> : <Trash2 className="w-[13px] h-[13px]" />}
       </button>
@@ -152,9 +151,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      <aside className="w-[240px] h-full bg-surface border-r border-border flex flex-col shrink-0 overflow-hidden">
-        <div className="px-5 pt-5 pb-4 border-b border-border">
-          <span className="font-mono text-[13px] font-medium text-white tracking-[0.06em] uppercase">LocalLens</span>
+      <aside className="w-[240px] h-full bg-sidebar border-r border-sidebarBorder flex flex-col shrink-0 overflow-hidden">
+        <div className="px-5 pt-5 pb-4 border-b border-sidebarBorder">
+          <span className="font-mono text-[13px] font-medium text-sidebarText tracking-[0.06em] uppercase">LocalLens</span>
         </div>
 
         <nav className="px-3 pt-3 flex flex-col gap-[2px]">
@@ -167,9 +166,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={path}
                 onClick={() => navigate(path)}
-                className={`flex items-center gap-[10px] w-full px-3 py-[7px] rounded-8 text-[13px] font-medium transition-all duration-150 text-left ${active ? 'bg-white/10 text-white' : 'text-muted7 hover:text-muted11 hover:bg-raised'}`}
+                className={`flex items-center gap-[10px] w-full px-3 py-[7px] rounded-8 text-[13px] font-medium transition-all duration-150 text-left ${active ? 'bg-sidebarDark text-sidebarText' : 'text-sidebarTextDim hover:text-sidebarText hover:bg-sidebarHi'}`}
               >
-                <Icon className={`w-[14px] h-[14px] shrink-0 ${active ? 'text-white' : 'text-muted9'}`} />
+                <Icon className={`w-[14px] h-[14px] shrink-0 ${active ? 'text-sidebarText' : 'text-sidebarTextDim'}`} />
                 {label}
               </button>
             );
@@ -178,7 +177,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
           {deletingId && (
-            <div className="px-4 py-3 bg-white/5 border-b border-white/10 animate-fade-in">
+            <div className="px-4 py-3 bg-sidebarDark border-b border-sidebarBorder animate-fade-in">
               <ProgressBar 
                 progress={deletionProgress} 
                 label="Deleting..." 
@@ -189,12 +188,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           )}
           <div className="px-3 pt-4 pb-2">
             <div className="flex items-center justify-between mb-2 px-1">
-              <div className="font-mono text-[9px] text-muted7 uppercase tracking-[0.12em]">Documents</div>
+              <div className="font-mono text-[9px] text-sidebarTextMute uppercase tracking-[0.12em]">Documents</div>
               {currentSessionId && (
                 <div className="flex items-center gap-2">
-                  <button onClick={handleSelectAll} disabled={isBulkOperating} className="font-mono text-[8px] text-muted7 hover:text-white uppercase tracking-wider transition-colors">All</button>
-                  <span className="text-muted7 opacity-30">|</span>
-                  <button onClick={handleGlobalSearch} disabled={isBulkOperating} className="font-mono text-[8px] text-muted7 hover:text-white uppercase tracking-wider transition-colors">None</button>
+                  <button onClick={handleSelectAll} disabled={isBulkOperating} className="font-mono text-[8px] text-sidebarTextDim hover:text-sidebarText uppercase tracking-wider transition-colors">All</button>
+                  <span className="text-sidebarTextMute opacity-30">|</span>
+                  <button onClick={handleGlobalSearch} disabled={isBulkOperating} className="font-mono text-[8px] text-sidebarTextDim hover:text-sidebarText uppercase tracking-wider transition-colors">None</button>
                 </div>
               )}
             </div>
@@ -205,9 +204,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                   data-testid="global-search-toggle"
                   onClick={handleGlobalSearch}
                   disabled={isBulkOperating}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-6 border transition-all text-left ${isGlobalMode ? 'bg-white/10 border-white/20 text-white' : 'bg-raised/30 border-border text-muted9 hover:border-muted4'}`}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-6 border transition-all text-left ${isGlobalMode ? 'bg-sidebarDark border-sidebarDark text-sidebarText' : 'bg-transparent border-sidebarBorder text-sidebarTextDim hover:border-sidebarTextMute'}`}
                 >
-                  {isBulkOperating ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Globe className={`w-[12px] h-[12px] ${isGlobalMode ? 'text-white' : 'text-muted7'}`} />}
+                  {isBulkOperating ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Globe className={`w-[12px] h-[12px] ${isGlobalMode ? 'text-sidebarText' : 'text-sidebarTextDim'}`} />}
                   <span className="text-[11px] font-medium">Global Search</span>
                   {isGlobalMode && <span className="ml-auto font-mono text-[8px] uppercase tracking-tighter opacity-70 italic">Active</span>}
                 </button>
@@ -215,9 +214,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
 
             {loading ? (
-              <div className="text-muted9 text-[12px] italic px-1">Loading…</div>
+              <div className="text-sidebarTextDim text-[12px] italic px-1">Loading…</div>
             ) : documents.length === 0 ? (
-              <div className="text-muted7 text-[12px] px-1">No documents yet.</div>
+              <div className="text-sidebarTextDim text-[12px] px-1">No documents yet.</div>
             ) : (
               <div className="flex flex-col gap-[2px]">
                 {documents.map((doc) => (
@@ -239,19 +238,19 @@ const Sidebar: React.FC<SidebarProps> = ({
 
           <div className="px-3 pt-4 pb-2">
             <div className="flex items-center justify-between mb-2">
-               <div className="font-mono text-[9px] text-muted7 uppercase tracking-[0.12em] px-1">Chat History</div>
-              <button onClick={handleNewChat} className="p-1 hover:bg-raised rounded-4 text-muted9 hover:text-white transition-colors" title="New Chat"><Plus className="w-[12px] h-[12px]" /></button>
+               <div className="font-mono text-[9px] text-sidebarTextMute uppercase tracking-[0.12em] px-1">Chat History</div>
+              <button onClick={handleNewChat} className="p-1 hover:bg-sidebarHi rounded-4 text-sidebarTextDim hover:text-sidebarText transition-colors" title="New Chat"><Plus className="w-[12px] h-[12px]" /></button>
             </div>
             <div className="flex flex-col gap-[2px]">
               {sessions.map((session) => (
                 <div
                   key={session.session_id}
                   onClick={() => onSelectSession(session.session_id)}
-                  className={`group relative rounded-6 px-2 py-[8px] cursor-pointer transition-colors flex items-center gap-2 ${currentSessionId === session.session_id ? 'bg-raised' : 'hover:bg-raised/50'}`}
+                  className={`group relative rounded-6 px-2 py-[8px] cursor-pointer transition-colors flex items-center gap-2 ${currentSessionId === session.session_id ? 'bg-sidebarDark' : 'hover:bg-sidebarHi'}`}
                 >
-                  <MessageSquare className={`w-[12px] h-[12px] shrink-0 ${currentSessionId === session.session_id ? 'text-white' : 'text-muted7'}`} />
-                  <div className={`text-[12px] truncate pr-4 ${currentSessionId === session.session_id ? 'text-white' : 'text-muted7 group-hover:text-muted11'}`}>{session.title}</div>
-                  <button onClick={(e) => handleDeleteSession(session.session_id, e)} disabled={deletingSessionId === session.session_id} className="absolute right-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted7 hover:text-white focus:outline-none">
+                  <MessageSquare className={`w-[12px] h-[12px] shrink-0 ${currentSessionId === session.session_id ? 'text-sidebarText' : 'text-sidebarTextDim'}`} />
+                  <div className={`text-[12px] truncate pr-4 ${currentSessionId === session.session_id ? 'text-sidebarText' : 'text-sidebarTextDim group-hover:text-sidebarText'}`}>{session.title}</div>
+                  <button onClick={(e) => handleDeleteSession(session.session_id, e)} disabled={deletingSessionId === session.session_id} className="absolute right-1 opacity-0 group-hover:opacity-100 transition-opacity text-sidebarTextDim hover:text-sidebarText focus:outline-none">
                     {deletingSessionId === session.session_id ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Trash2 className="w-[11px] h-[11px]" />}
                   </button>
                 </div>
@@ -260,8 +259,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        <div className="px-5 py-4 border-t border-border mt-auto">
-          <div className="flex items-center gap-2 text-muted7">
+        <div className="px-5 py-4 border-t border-sidebarBorder mt-auto">
+          <div className="flex items-center gap-2 text-sidebarTextDim">
             <Database className="w-[11px] h-[11px]" />
             <span className="font-mono text-[10px] uppercase tracking-[0.08em]">Milvus · PostgreSQL</span>
           </div>

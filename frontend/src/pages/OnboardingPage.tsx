@@ -47,15 +47,15 @@ const OnboardingPage: React.FC = () => {
       <div className="w-full max-w-[440px]">
 
         <div className="flex justify-center mb-8">
-          <span className="font-mono text-[10px] text-accent uppercase tracking-[0.2em] px-3 py-1 border border-white/20 rounded-full bg-accentDim">
+          <span className="font-mono text-[10px] text-accent uppercase tracking-[0.2em] px-3 py-1 border border-accent/20 rounded-full bg-accentDim">
             LocalLens
           </span>
         </div>
 
-        <h1 className="text-[32px] font-semibold text-white leading-[1.2] tracking-[-0.02em] text-center mb-3">
+        <h1 className="text-[32px] font-semibold text-textPrimary leading-[1.2] tracking-[-0.02em] text-center mb-3">
           Your documents,<br />answered privately.
         </h1>
-        <p className="text-[14px] text-muted7 text-center leading-relaxed mb-10 max-w-[340px] mx-auto">
+        <p className="text-[14px] text-textSecondary text-center leading-relaxed mb-10 max-w-[340px] mx-auto">
           Semantic search, multimodal RAG, and verified citations — all on your machine.
         </p>
 
@@ -68,12 +68,12 @@ const OnboardingPage: React.FC = () => {
                 ${i < features.length - 1 ? 'border-b border-border' : ''}
               `}
             >
-              <div className="w-9 h-9 rounded-8 bg-raised border border-border flex items-center justify-center text-[16px] shrink-0">
+              <div className="w-9 h-9 rounded-8 bg-cardHi border border-border shadow-card flex items-center justify-center text-[16px] shrink-0">
                 {f.emoji}
               </div>
               <div>
-                <div className="text-[14px] font-medium text-muted14 mb-[2px]">{f.title}</div>
-                <div className="text-[12px] text-muted6 leading-snug">{f.desc}</div>
+                <div className="text-[14px] font-medium text-textPrimary mb-[2px]">{f.title}</div>
+                <div className="text-[12px] text-textMuted leading-snug">{f.desc}</div>
               </div>
             </div>
           ))}
@@ -83,7 +83,7 @@ const OnboardingPage: React.FC = () => {
           onClick={() => navigate('/ingest')}
           className="
             w-full h-[46px] rounded-10 bg-accent hover:bg-accentLight
-            text-[14px] font-medium text-base
+            text-[14px] font-medium text-[#F0E8EF]
             shadow-glow
             transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-base
@@ -92,7 +92,7 @@ const OnboardingPage: React.FC = () => {
           Import Your First PDF →
         </button>
 
-        <div className="mt-5 text-center font-mono text-[11px] text-muted4 tracking-[0.04em]">
+        <div className="mt-5 text-center font-mono text-[11px] text-textMuted tracking-[0.04em]">
           No accounts · No API keys · No internet
         </div>
       </div>

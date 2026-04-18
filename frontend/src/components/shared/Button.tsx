@@ -20,8 +20,8 @@ const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'inline-flex items-center justify-center rounded-6 font-medium transition-colors focus:outline-none';
   
   const variants = {
-    primary: 'bg-base border border-border text-white hover:bg-raised hover:border-muted4',
-    ghost: 'bg-transparent border border-border text-muted7 hover:bg-raised hover:text-muted10',
+    primary: 'bg-card border border-border shadow-sm text-textPrimary hover:bg-cardHi hover:border-textSecondary',
+    ghost: 'bg-transparent border border-border text-textSecondary hover:bg-card hover:text-textPrimary',
   };
   
   const sizes = {
