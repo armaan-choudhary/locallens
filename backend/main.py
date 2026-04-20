@@ -29,6 +29,11 @@ app.include_router(session_routes.router, tags=["Sessions"])
 app.include_router(query_routes.router, tags=["Queries"])
 app.include_router(ingest_routes.router, tags=["Ingestion"])
 
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
 # Serve internal image files
 from fastapi.responses import FileResponse
 import os

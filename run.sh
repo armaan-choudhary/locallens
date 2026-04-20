@@ -10,6 +10,42 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}Starting LocalLens Stack...${NC}"
 
+# Wait for a TCP port to become available before starting dependent services.
+wait_for_port() {
+    local host="$1"
+    local port="$2"
+    local label="$3"
+    local max_attempts=60
+
+    echo -e "${BLUE}Waiting for ${label} on ${host}:${port}...${NC}"
+    for ((attempt=1; attempt<=max_attempts; attempt++)); do
+        if (echo > "/dev/tcp/${host}/${port}") >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 1
+    done
+
+    echo -e "${RED:-\033[0;31m}Error: ${label} did not become ready on ${host}:${port}.${NC}"
+    return 1
+}
+
+wait_for_http() {
+    local url="$1"
+    local label="$2"
+    local max_attempts=60
+
+    echo -e "${BLUE}Waiting for ${label} at ${url}...${NC}"
+    for ((attempt=1; attempt<=max_attempts; attempt++)); do
+        if curl -fsS "$url" >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 1
+    done
+
+    echo -e "${RED:-\033[0;31m}Error: ${label} did not become ready at ${url}.${NC}"
+    return 1
+}
+
 # Function to handle shutdown
 cleanup() {
     echo -e "\n${BLUE}Shutting down LocalLens...${NC}"
@@ -30,6 +66,9 @@ if ! command -v docker &> /dev/null; then
 fi
 docker compose up -d
 
+wait_for_port 127.0.0.1 5432 "Postgres" || exit 1
+wait_for_port 127.0.0.1 19530 "Milvus" || exit 1
+
 # 2. Start Backend
 echo -e "${GREEN}[2/3] Starting FastAPI Backend...${NC}"
 cd backend
@@ -48,8 +87,15 @@ else
 fi
 BACKEND_PID=$!
 
-# Wait a few seconds for backend to bind (models load lazily now)
-sleep 5
+if ! wait_for_port 127.0.0.1 8000 "FastAPI backend"; then
+    echo -e "${RED:-\033[0;31m}Backend failed to start. Check backend/backend_server.log for details.${NC}"
+    exit 1
+fi
+
+if ! wait_for_http http://127.0.0.1:8000/health "FastAPI backend health"; then
+    echo -e "${RED:-\033[0;31m}Backend started listening but did not finish initialization. Check backend/backend_server.log for details.${NC}"
+    exit 1
+fi
 
 # 3. Start Frontend
 echo -e "${GREEN}[3/3] Starting Vite Frontend...${NC}"
