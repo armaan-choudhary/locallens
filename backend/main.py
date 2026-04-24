@@ -38,7 +38,7 @@ async def health_check():
 from fastapi.responses import FileResponse
 import os
 
-@app.get("/api/images/{image_id}")
+@app.get("/images/{image_id}")
 async def get_image_file(image_id: str):
     # Determine the directory where this file is located
     current_dir = os.path.dirname(os.path.abspath(__file__))
