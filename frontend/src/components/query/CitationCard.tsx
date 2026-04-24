@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import type { CitationCard as CitationType } from '../../types';
+import { Eye } from 'lucide-react';
 
 interface CitationCardProps {
   citation: CitationType;
   index: number;
+  onViewSource?: (docId: string, docName: string, pageNumber: number) => void;
 }
 
-const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
+const CitationCard: React.FC<CitationCardProps> = ({ citation, index, onViewSource }) => {
   const [expanded, setExpanded] = useState(false);
 
   const isImage = citation.source_type === 'image';
@@ -27,6 +29,8 @@ const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
   const displayName = fname.length > 40
     ? fname.slice(0, 18) + '…' + fname.slice(-12)
     : fname;
+
+  const canViewSource = !!citation.doc_id && !!onViewSource;
 
   return (
     <div
@@ -97,18 +101,39 @@ const CitationCard: React.FC<CitationCardProps> = ({ citation, index }) => {
         </button>
       )}
 
-      {/* Bbox row — only for verified image sources */}
-      {hasBbox && citation.bbox && (
-        <div className="font-mono text-[9px] text-textMuted tracking-[0.04em] mt-1">
-          BBOX &nbsp;
-          {[
-            `x₀=${Math.round(citation.bbox[0])}`,
-            `y₀=${Math.round(citation.bbox[1])}`,
-            `x₁=${Math.round(citation.bbox[2])}`,
-            `y₁=${Math.round(citation.bbox[3])}`,
-          ].join('  ')}
-        </div>
-      )}
+      {/* Footer: Bbox + View Source */}
+      <div className="flex items-center justify-between mt-1">
+        {/* Bbox row — only for verified image sources */}
+        {hasBbox && citation.bbox ? (
+          <div className="font-mono text-[9px] text-textMuted tracking-[0.04em]">
+            BBOX &nbsp;
+            {[
+              `x₀=${Math.round(citation.bbox[0])}`,
+              `y₀=${Math.round(citation.bbox[1])}`,
+              `x₁=${Math.round(citation.bbox[2])}`,
+              `y₁=${Math.round(citation.bbox[3])}`,
+            ].join('  ')}
+          </div>
+        ) : <div />}
+
+        {/* View Source button */}
+        {canViewSource && (
+          <button
+            onClick={() => onViewSource!(citation.doc_id!, citation.doc_name, citation.page_number)}
+            className="
+              flex items-center gap-1.5 px-2.5 py-1 rounded-6
+              bg-accent/8 border border-accent/15
+              text-accent text-[10px] font-medium font-mono uppercase tracking-wider
+              hover:bg-accent/15 hover:border-accent/30 transition-all
+              group
+            "
+            title={`View page ${citation.page_number} in ${fname}`}
+          >
+            <Eye className="w-3 h-3 group-hover:scale-110 transition-transform" />
+            View Source
+          </button>
+        )}
+      </div>
     </div>
   );
 };

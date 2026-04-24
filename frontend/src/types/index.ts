@@ -7,6 +7,7 @@ export interface Document {
 }
 
 export interface CitationCard {
+  doc_id?: string
   doc_name: string
   page_number: number
   chunk_text: string

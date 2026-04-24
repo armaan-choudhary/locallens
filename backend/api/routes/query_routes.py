@@ -16,7 +16,7 @@ from generation.hallucination_checker import verify_answer
 from citation.citation_mapper import map_citations
 from storage.postgres_store import (
     get_messages_for_session, get_docs_for_session, add_message, 
-    get_image_by_milvus_id
+    get_image_by_milvus_id, get_all_sessions
 )
 from storage.milvus_store import search_image
 from embeddings.image_embedder import embed_images
@@ -71,6 +71,7 @@ async def search_by_image(file: UploadFile = File(...), session_id: str = Form(N
     citations = []
     for res in image_results:
         citations.append({
+            "doc_id": res["doc_id"],
             "doc_name": res["filename"],
             "page_number": res["page"],
             "source_type": "image",
@@ -108,6 +109,13 @@ async def handle_query_stream(request: QueryRequest):
     history = []
     session_doc_ids = None
     if session_id:
+        # Verify session exists to avoid FK violations from stale session IDs
+        all_sessions = get_all_sessions()
+        session_exists = any(s["session_id"] == session_id for s in all_sessions)
+        if not session_exists:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Session not found. Please start a new chat.")
+        
         history = get_messages_for_session(session_id)
         scoped = get_docs_for_session(session_id)
         if scoped:

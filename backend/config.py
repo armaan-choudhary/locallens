@@ -41,5 +41,5 @@ TARGET_LATENCY_SECONDS = 15
 LLM_MIN_FREE_RAM_GB = float(os.getenv("LLM_MIN_FREE_RAM_GB", "3.0"))
 
 # Storage and Path Configurations
-INGEST_TEMP_DIR = "/tmp/locallens_ingest"
+INGEST_TEMP_DIR = os.path.join(PROJECT_ROOT, "backend", "storage", "documents")
 STORAGE_IMAGES_DIR = os.path.join(PROJECT_ROOT, "backend", "storage", "images")

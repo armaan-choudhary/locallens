@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import {
   getDocuments, getSessions, getSessionDocs,
-  addDocToSession, removeDocFromSession,
+  addDocToSession, removeDocFromSession, createSession,
 } from '../../api/client';
 import type { Document, ChatSession } from '../../types';
 import Sidebar from './Sidebar';
@@ -49,6 +49,7 @@ const AppLayout: React.FC = () => {
   const fetchSessions = useCallback(async () => {
     const sess = await getSessions();
     setSessions(sess);
+    return sess;
   }, []);
 
   const fetchSessionDocs = useCallback(async (sid: string) => {
@@ -65,10 +66,40 @@ const AppLayout: React.FC = () => {
     }
   }, []);
 
-  // Initial load
+  // Initial load: fetch docs & sessions, then validate/create session
   useEffect(() => {
     fetchDocs();
-    fetchSessions();
+    (async () => {
+      const sess = await fetchSessions();
+      
+      // Validate stored session ID against actual sessions
+      const storedId = localStorage.getItem('currentSessionId');
+      if (storedId && sess.length > 0) {
+        const exists = sess.some((s: ChatSession) => s.session_id === storedId);
+        if (!exists) {
+          // Stale session — switch to the most recent valid one
+          setCurrentSessionId(sess[0].session_id);
+        }
+      } else if (storedId && sess.length === 0) {
+        // No sessions at all — clear stale ID and create a new one
+        setCurrentSessionId(undefined);
+        const newSess = await createSession('New Chat');
+        if (newSess) {
+          setCurrentSessionId(newSess.session_id);
+          await fetchSessions();
+        }
+      } else if (!storedId && sess.length === 0) {
+        // First-time user with no sessions — auto-create one
+        const newSess = await createSession('New Chat');
+        if (newSess) {
+          setCurrentSessionId(newSess.session_id);
+          await fetchSessions();
+        }
+      } else if (!storedId && sess.length > 0) {
+        // No stored session but sessions exist — select the most recent
+        setCurrentSessionId(sess[0].session_id);
+      }
+    })();
   }, [fetchDocs, fetchSessions]);
 
   // When session changes, load its docs (or clear)

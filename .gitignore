@@ -32,6 +32,8 @@ frontend/tests-results/
 # Storage & Temporary
 backend/storage/images/*
 !backend/storage/images/.gitkeep
+backend/storage/documents/*
+!backend/storage/documents/.gitkeep
 !storage/images/.gitkeep
 var/
 ~/

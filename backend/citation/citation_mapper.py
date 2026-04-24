@@ -11,6 +11,7 @@ def map_citations(final_answer: str, ranked_chunks: list[dict]) -> list[dict]:
         source_type = chunk.get("source_type")
         
         card = {
+            "doc_id": chunk.get("doc_id"),
             "doc_name": chunk.get("filename", "Unknown Document"),
             "page_number": chunk.get("page", 1),
             "source_type": source_type
